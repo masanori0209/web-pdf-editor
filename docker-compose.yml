@@ -5,6 +5,7 @@ services:
       context: ./app
       dockerfile: Dockerfile
     command: 'sh /app/start-front.sh'
+    tty: true
     volumes:
       - ./app:/app
       - ./wasm:/wasm
@@ -14,5 +15,6 @@ services:
     build:
       context: ./wasm
       dockerfile: Dockerfile
+    tty: true
     volumes:
       - ./wasm:/wasm

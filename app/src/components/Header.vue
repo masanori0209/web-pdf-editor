@@ -2,7 +2,7 @@
   <header class="main-header">
     <div class="logo">
       <img src="@/assets/logo.png">
-      <h1 v-if="!isMinimum">GIF SEARCH</h1>
+      <h1 v-if="!isMinimum">PDF EDITOR</h1>
     </div>
     <div class="search">
       <input class="input" type="search" v-model="search" placeholder="検索"/>
