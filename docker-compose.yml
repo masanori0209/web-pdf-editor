@@ -1,11 +1,18 @@
 version: '3'
 services:
-  front:
+  app:
     build:
-      context: ./front
+      context: ./app
       dockerfile: Dockerfile
     command: 'sh /app/start-front.sh'
     volumes:
-      - ./front:/app
+      - ./app:/app
+      - ./wasm:/wasm
     ports:
       - 8080:8080
+  wasm:
+    build:
+      context: ./wasm
+      dockerfile: Dockerfile
+    volumes:
+      - ./wasm:/wasm
