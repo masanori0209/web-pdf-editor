@@ -1,6 +1,7 @@
 <template>
   <div class="home">
     <b-steps
+      :has-navigation="false"
       v-model="step">
       <b-step-item step="1" label="Account">
         <PDFUpload
