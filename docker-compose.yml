@@ -8,13 +8,5 @@ services:
     tty: true
     volumes:
       - ./app:/app
-      - ./wasm:/wasm
     ports:
       - 8080:8080
-  wasm:
-    build:
-      context: ./wasm
-      dockerfile: Dockerfile
-    tty: true
-    volumes:
-      - ./wasm:/wasm
