@@ -18,9 +18,7 @@
 <script>
 import Header  from '@/components/Header.vue'
 import Body    from '@/components/Body.vue'
-import {
-  debugFunc
-} from '@/wasmAPI'
+import debugFunc from '@/wasmAPI'
 export default {
   components: {
     Header,
