@@ -1,26 +1,29 @@
 <template>
   <div class="home">
-    <template v-if="step===0">
-      <PDFUpload
-        :parameter="parameter"
-        :deleteFile="deleteFile"
-        :uploadFile="uploadFile"
-      />
-    </template>
-    <template v-else-if="step===1">
-      <PDFEditor
-        :parameter="parameter"
-        :deleteFile="deleteFile"
-        :uploadFile="uploadFile"
-      />
-    </template>
-    <template v-else>
-      <PDFDownload
-        :parameter="parameter"
-        :deleteFile="deleteFile"
-        :uploadFile="uploadFile"
-      />
-    </template>
+    <b-steps
+      v-model="step">
+      <b-step-item step="1" label="Account">
+        <PDFUpload
+          :parameter="parameter"
+          :deleteFile="deleteFile"
+          :uploadFile="uploadFile"
+        />
+      </b-step-item>
+      <b-step-item step="2" label="Profile">
+        <PDFEditor
+          :parameter="parameter"
+          :deleteFile="deleteFile"
+          :uploadFile="uploadFile"
+        />
+      </b-step-item>
+      <b-step-item step="3" label="Finish">
+        <PDFDownload
+          :parameter="parameter"
+          :deleteFile="deleteFile"
+          :uploadFile="uploadFile"
+        />
+      </b-step-item>
+    </b-steps>
   </div>
 </template>
 <script>
