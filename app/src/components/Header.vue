@@ -5,16 +5,16 @@
       <h1 v-if="!isMinimum">PDF EDITOR</h1>
     </div>
     <div class="search">
-      <input class="input" type="search" v-model="search" placeholder="検索"/>
-      <button
+      <!-- <input class="input" type="search" v-model="search" placeholder="検索"/> -->
+      <!-- <button
         class="button mdi mdi-image-search-outline is-primary"
         @click="searchClick"
       >
-      </button>
+      </button> -->
     </div>
-    <div class="nav-info" v-if="!isMinimum">
+    <!-- <div class="nav-info" v-if="!isMinimum">
       <a @click="trendClick" class="mdi mdi-cloud-refresh"></a>
-    </div>
+    </div> -->
   </header>
 </template>
 <script>
@@ -52,6 +52,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
+  background: #375b98;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
   .logo {
     display: flex;
@@ -60,7 +61,7 @@ export default {
       margin-left: 8px;
       font-size: 30px;
       font-weight: 700;
-      color: #375b98;
+      color: white;
     }
     img {
       height: 48px;
