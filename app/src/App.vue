@@ -5,9 +5,7 @@
       @searchAPI="searchAPI"
       @trendAPI="trendAPI"
     />
-    <!-- サイドメニュー部 -->
     <div class="main">
-      <SideMenu/>
       <!-- ボディ部 -->
       <Body>
         <b-loading :is-full-page="true" v-model="isLoading" :can-cancel="false"></b-loading>
@@ -20,12 +18,10 @@
 </template>
 <script>
 import Header from '@/components/Header.vue'
-import SideMenu from '@/components/SideMenu.vue'
 import Body from '@/components/Body.vue'
 export default {
   components: {
     Header,
-    SideMenu,
     Body
   },
   data () {
