@@ -2,8 +2,7 @@
   <div id="app">
     <!-- ヘッダー部 -->
     <Header
-      @searchAPI="searchAPI"
-      @trendAPI="trendAPI"
+      :debugClick="debugClick"
     />
     <div class="main">
       <!-- ボディ部 -->
@@ -17,8 +16,11 @@
   </div>
 </template>
 <script>
-import Header from '@/components/Header.vue'
-import Body from '@/components/Body.vue'
+import Header  from '@/components/Header.vue'
+import Body    from '@/components/Body.vue'
+import {
+  debugFunc
+} from '@/wasmAPI'
 export default {
   components: {
     Header,
@@ -32,6 +34,9 @@ export default {
   watch: {
   },
   methods: {
+    debugClick () {
+      debugFunc("a", "b")
+    }
   },
   mounted () {
   }
