@@ -12,9 +12,7 @@
       <Body>
         <b-loading :is-full-page="true" v-model="isLoading" :can-cancel="false"></b-loading>
         <transition>
-          <router-view
-            :gifImageList="gifImageList"
-          />
+          <router-view/>
         </transition>
       </Body>
     </div>
@@ -32,41 +30,14 @@ export default {
   },
   data () {
     return {
-      gifImageList: {},
-      isLoading: true
+      isLoading: false
     }
   },
   watch: {
-    $route () {
-      this.searchAPI(this.$route.query.category)
-    }
   },
   methods: {
-    searchAPI (text) {
-      this.isLoading = true
-      this.gifImageList = {}
-      this.$gf.search(text,
-        {
-          sort: 'relevant',
-          lang: 'es',
-          limit: 30,
-          type: 'stickers'
-        }).then((d) => {
-          this.gifImageList = d
-          this.isLoading = false
-        })
-    },
-    trendAPI () {
-      this.isLoading = true
-      this.gifImageList = {}
-      this.$gf.trending({ limit: 30 }).then((d) => {
-        this.gifImageList = d
-        this.isLoading = false
-      })
-    }
   },
   mounted () {
-    this.trendAPI()
   }
 }
 </script>

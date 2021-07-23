@@ -1,21 +1,9 @@
 <template>
   <div class="card custom">
-    <div class="card-image">
-      <figure class="image">
-        <img class="img" :src="gif.images.original.url" alt="GIF">
-      </figure>
-      <p class="card-title">{{gif.title}}</p>
-    </div>
   </div>
 </template>
 <script>
 export default {
-  props: {
-    gif: {
-      type: Object,
-      required: true
-    }
-  },
 }
 </script>
 <style lang="scss" scoped>

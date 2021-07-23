@@ -1,25 +1,15 @@
 <template>
   <div class="home">
     <transition-group tag="div" class="list" name="vue-anime-list">
-      <Card
-        v-for="(gif, idx) in gifImageList.data"
-        :key="idx"
-        :gif="gif"
-      />
+      <PDFEditor/>
     </transition-group>
   </div>
 </template>
 <script>
-import Card from '@/components/Card.vue'
+import PDFEditor from '@/components/PDFEditor.vue'
 export default {
   components: {
-    Card,
-  },
-  props: {
-    gifImageList: {
-      type: Object,
-      required: true
-    }
+    PDFEditor,
   },
 }
 </script>
