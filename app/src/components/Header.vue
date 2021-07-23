@@ -4,43 +4,35 @@
       <img src="@/assets/logo.png">
       <h1 v-if="!isMinimum">P-EDIT</h1>
     </div>
-    <div class="search">
-      <!-- <input class="input" type="search" v-model="search" placeholder="検索"/> -->
-      <!-- <button
-        class="button mdi mdi-image-search-outline is-primary"
-        @click="searchClick"
-      >
-      </button> -->
+    <div class="nav-info" v-if="!isMinimum">
+      <a @click="debugClick" class="mdi mdi-cloud-refresh"></a>
     </div>
-    <!-- <div class="nav-info" v-if="!isMinimum">
-      <a @click="trendClick" class="mdi mdi-cloud-refresh"></a>
-    </div> -->
   </header>
 </template>
 <script>
 export default {
+  props: {
+    debugClick: {
+      type: Function,
+      require: true
+    }
+  },
   data () {
     return {
       search: "",
       isMinimum: window.innerWidth > 640 ? false : true
     }
   },
-  created() {
+  created () {
     window.addEventListener("resize", this.changeSize);
-} ,
+  },
   destroyed() {
     window.removeEventListener("resize", this.changeSize);
   },
   methods: {
-    searchClick () {
-      this.$emit("searchAPI", this.search)
-    },
     changeSize () {
       this.isMinimum = window.innerWidth > 720 ? false : true
     },
-    trendClick () {
-      this.$emit("trendAPI")
-    }
   }
 }
 </script>
