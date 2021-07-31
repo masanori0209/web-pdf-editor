@@ -17,3 +17,9 @@ extern {
 pub fn greet() {
     alert("Hello, web-pdf-editor!");
 }
+
+#[wasm_bindgen]
+pub fn file_upload_view(parameter: &JsValue) {
+    println!("parameter is {}", parameter)
+    0
+}

@@ -55,7 +55,7 @@ export default {
       }
     },
     uploadFile () {
-      fileUploadView(parameter)
+      fileUploadView(this.parameter)
       this.step++
     }
   }
