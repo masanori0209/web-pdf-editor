@@ -8,6 +8,8 @@ down:
 	docker-compose down
 build:
 	docker-compose build
+comp:
+	docker-compose exec app /bin/bash -c "cd wasm && wasm-pack build"
 logs:
 	docker-compose logs -f
 ps:
