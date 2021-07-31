@@ -3,21 +3,21 @@
     <b-steps
       :has-navigation="false"
       v-model="step">
-      <b-step-item step="1" label="Account">
+      <b-step-item step="1" label="Upload">
         <PDFUpload
           :parameter="parameter"
           :deleteFile="deleteFile"
           :uploadFile="uploadFile"
         />
       </b-step-item>
-      <b-step-item step="2" label="Profile">
+      <b-step-item step="2" label="Edit">
         <PDFEditor
           :parameter="parameter"
           :deleteFile="deleteFile"
           :uploadFile="uploadFile"
         />
       </b-step-item>
-      <b-step-item step="3" label="Finish">
+      <b-step-item step="3" label="Download">
         <PDFDownload
           :parameter="parameter"
           :deleteFile="deleteFile"
@@ -31,6 +31,7 @@
 import PDFUpload   from '@/components/PDFUpload.vue'
 import PDFEditor   from '@/components/PDFEditor.vue'
 import PDFDownload from '@/components/PDFDownload.vue'
+import   from '@/wasmAPI'
 export default {
   components: {
     PDFUpload,
@@ -54,6 +55,7 @@ export default {
       }
     },
     uploadFile () {
+      fileUploadView(parameter)
       this.step++
     }
   }

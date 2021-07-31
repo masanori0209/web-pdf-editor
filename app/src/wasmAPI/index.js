@@ -6,10 +6,17 @@ const load = (async () => {
 if (wasmAPI == undefined) {
     load()
 }
-const debugFunc = (async (context, payload) => {
-    console.log(wasmAPI)
-    const newPoint = await wasmAPI.greet()
-    return newPoint
+const debugFunc = (async () => {
+    console.log('start debugFunc')
+    const res = await wasmAPI.greet()
+    console.log('end debugFunc', res)
+    return res
+})
+const fileUploadView = (async (parameter) => {
+    console.log('start fileUploadView', parameter)
+    const res = await wasmAPI.fileUploadView()
+    console.log('end fileUploadView', res)
+    return res
 })
 
 export default debugFunc
