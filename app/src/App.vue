@@ -33,7 +33,7 @@ export default {
   },
   methods: {
     debugClick () {
-      debugFunc("a", "b")
+      debugFunc()
     }
   },
   mounted () {
