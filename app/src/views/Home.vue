@@ -28,10 +28,10 @@
   </div>
 </template>
 <script>
-import PDFUpload   from '@/components/PDFUpload.vue'
-import PDFEditor   from '@/components/PDFEditor.vue'
-import PDFDownload from '@/components/PDFDownload.vue'
-import   from '@/wasmAPI'
+import PDFUpload      from '@/components/PDFUpload.vue'
+import PDFEditor      from '@/components/PDFEditor.vue'
+import PDFDownload    from '@/components/PDFDownload.vue'
+import fileUploadView from '@/wasmAPI'
 export default {
   components: {
     PDFUpload,

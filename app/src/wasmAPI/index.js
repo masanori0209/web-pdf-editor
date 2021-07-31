@@ -19,4 +19,7 @@ const fileUploadView = (async (parameter) => {
     return res
 })
 
-export default debugFunc
+export default {
+    debugFunc,
+    fileUploadView
+}
