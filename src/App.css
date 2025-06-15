@@ -1,0 +1,741 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+.App {
+  text-align: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.App-header {
+  padding: 2rem 0;
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.App-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.App-header p {
+  margin: 0.5rem 0 0 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.main-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.upload-section {
+  margin: 2rem 0;
+}
+
+.dropzone {
+  border: 3px dashed rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+.dropzone:hover,
+.dropzone.active {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.dropzone p {
+  margin: 1rem 0;
+  font-size: 1.1rem;
+}
+
+.upload-button {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+  color: white;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.upload-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+}
+
+.loading {
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  margin: 2rem auto;
+  max-width: 400px;
+}
+
+.loading p {
+  margin: 0;
+  font-size: 1.1rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.error {
+  background: rgba(255, 107, 107, 0.2);
+  border: 2px solid rgba(255, 107, 107, 0.5);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem auto;
+  max-width: 500px;
+}
+
+.error p {
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.reset-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 0.6rem 1.5rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.edit-button {
+  background: linear-gradient(45deg, #4caf50, #45a049);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 1rem;
+}
+
+.edit-button:hover {
+  background: linear-gradient(45deg, #45a049, #3d8b40);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+}
+
+.edit-button.active {
+  background: linear-gradient(45deg, #ff9800, #f57c00);
+}
+
+.edit-button.active:hover {
+  background: linear-gradient(45deg, #f57c00, #ef6c00);
+  box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+/* 編集ツールパネル */
+.edit-tools {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tool-group {
+  margin-bottom: 1.5rem;
+}
+
+.tool-group h3 {
+  margin: 0 0 1rem 0;
+  color: white;
+  font-size: 1rem;
+}
+
+.tool-btn {
+  display: inline-block;
+  width: auto;
+  padding: 0.6rem 1.2rem;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.tool-btn:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tool-btn.active {
+  border-color: #4caf50;
+  background: #4caf50;
+  color: white;
+}
+
+.text-options {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.text-options h3 {
+  margin: 0 0 1rem 0;
+  color: white;
+  font-size: 1rem;
+}
+
+.option-group {
+  margin-bottom: 1rem;
+}
+
+.option-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
+.option-group input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.option-group input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.option-group input[type="color"] {
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.annotations-list {
+  margin-bottom: 1.5rem;
+}
+
+.annotations-list h3 {
+  margin: 0 0 1rem 0;
+  color: white;
+  font-size: 1rem;
+}
+
+.annotations-container {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.annotation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.annotation-item span {
+  flex: 1;
+  margin-right: 0.5rem;
+  word-break: break-word;
+  color: white;
+}
+
+.remove-btn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.3s ease;
+}
+
+.remove-btn:hover {
+  background: #ff5252;
+}
+
+.clear-all-btn {
+  width: 100%;
+  padding: 0.6rem;
+  background: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
+}
+
+.clear-all-btn:hover {
+  background: #f57c00;
+}
+
+.edit-actions {
+  text-align: center;
+}
+
+.save-btn {
+  padding: 0.8rem 2rem;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+}
+
+.save-btn:disabled {
+  background: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .edit-button {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .tool-btn {
+    width: 100%;
+    margin-right: 0;
+  }
+}
+
+.pdf-section {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  margin-top: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .pdf-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pdf-info {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: left;
+}
+
+.pdf-info h2 {
+  margin: 0 0 1rem 0;
+  text-align: center;
+  color: white;
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.info-item strong {
+  color: rgba(255, 255, 255, 0.9);
+  margin-right: 0.5rem;
+}
+
+.pdf-viewer {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.pdf-viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pdf-viewer-header h2 {
+  margin: 0;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.page-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-controls button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.page-controls button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.page-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-controls span {
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.pdf-container {
+  position: relative;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pdf-container.text-mode {
+  cursor: crosshair;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 700px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: white;
+}
+
+@media (max-width: 768px) {
+  .pdf-iframe {
+    height: 500px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .pdf-iframe {
+    height: 800px;
+  }
+}
+
+.pdf-overlay {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 700px;
+  border-radius: 8px;
+  background: transparent;
+  z-index: 10;
+}
+
+.pdf-overlay.clickable {
+  cursor: crosshair;
+}
+
+@media (max-width: 768px) {
+  .pdf-overlay {
+    height: 500px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .pdf-overlay {
+    height: 800px;
+  }
+}
+
+.annotation-marker {
+  position: absolute;
+  pointer-events: none;
+  font-size: 16px;
+  z-index: 5;
+}
+
+.text-input-overlay {
+  position: absolute;
+  z-index: 20;
+}
+
+.text-input-popup {
+  background: white;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 200px;
+}
+
+.text-input-popup input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #333;
+  background: white;
+}
+
+.text-input-popup input::placeholder {
+  color: #999;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.popup-actions button {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.3s ease;
+}
+
+.popup-actions button:first-child {
+  background: #4caf50;
+  color: white;
+}
+
+.popup-actions button:first-child:hover {
+  background: #45a049;
+}
+
+.popup-actions button:last-child {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.popup-actions button:last-child:hover {
+  background: #e0e0e0;
+}
+
+.edit-category {
+  margin-bottom: 1rem;
+}
+
+.edit-category h4 {
+  margin: 0 0 0.5rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.edits-list {
+  margin-bottom: 1.5rem;
+}
+
+.edits-list h3 {
+  margin: 0 0 1rem 0;
+  color: white;
+  font-size: 1rem;
+}
+
+.edits-container {
+  max-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+}
+
+.edit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  margin-bottom: 0.3rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.edit-item span {
+  flex: 1;
+  margin-right: 0.5rem;
+  word-break: break-word;
+  color: white;
+}
+
+.pdf-container.edit-mode {
+  cursor: crosshair;
+}
+
+.edit-marker {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.annotation-marker {
+  font-size: 16px;
+}
+
+.text-marker {
+  font-weight: bold;
+}
+
+.option-group select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.option-group select option {
+  background: #333;
+  color: white;
+}
+
+/* テキスト挿入オーバーレイ */
+.text-insertion-overlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+  user-select: none;
+}

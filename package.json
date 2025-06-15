@@ -1,0 +1,37 @@
+{
+  "name": "pdf-editor",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:wasm && tsc -b && vite build",
+    "build:wasm": "cd pdf_wasm && wasm-pack build --target web --out-dir ../public/wasm",
+    "build:wasm:dev": "cd pdf_wasm && wasm-pack build --dev --target web --out-dir ../public/wasm",
+    "dev:wasm": "npm run build:wasm:dev && npm run dev",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "clean": "rm -rf public/wasm dist",
+    "setup": "npm run build:wasm:dev"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.0.379",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-dropzone": "^14.2.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vite": "^6.3.5"
+  }
+}
