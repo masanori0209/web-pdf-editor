@@ -56,7 +56,7 @@ test.describe('Pattern G: フルジャーニー（一連の流れ）', () => {
 
     // --- Phase 5: 日本語編集 ---
     await addAnnotation(page, 'ジャーニー注釈', { x: 220, y: 280 });
-    await addTextInsertion(page, 'ジャーニーテキスト', { x: 320, y: 380 });
+    await addTextInsertion(page, 'ジャーニーテキスト', { x: 200, y: 380 });
     await expect(page.getByText('注釈 (1)')).toBeVisible();
     await expect(page.getByText('テキスト挿入 (1)')).toBeVisible();
 

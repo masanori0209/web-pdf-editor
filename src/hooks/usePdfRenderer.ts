@@ -12,11 +12,11 @@ interface UsePdfRendererOptions {
   pdfDataUrl: string | null;
   currentPage: number;
   zoom: number;
+  viewportRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function usePdfRenderer({ pdfDataUrl, currentPage, zoom }: UsePdfRendererOptions) {
+export function usePdfRenderer({ pdfDataUrl, currentPage, zoom, viewportRef }: UsePdfRendererOptions) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [metrics, setMetrics] = useState<PageRenderMetrics | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
@@ -24,7 +24,7 @@ export function usePdfRenderer({ pdfDataUrl, currentPage, zoom }: UsePdfRenderer
   const hasRenderedRef = useRef(false);
 
   useEffect(() => {
-    if (!pdfDataUrl || !canvasRef.current || !containerRef.current) return;
+    if (!pdfDataUrl || !canvasRef.current || !viewportRef.current) return;
 
     let cancelled = false;
 
@@ -43,9 +43,9 @@ export function usePdfRenderer({ pdfDataUrl, currentPage, zoom }: UsePdfRenderer
           height: number;
         };
 
-        const container = containerRef.current!;
-        const containerWidth = container.clientWidth;
-        const containerHeight = container.clientHeight || 700;
+        const viewport = viewportRef.current!;
+        const containerWidth = viewport.clientWidth;
+        const containerHeight = viewport.clientHeight;
         const pageMetrics = getPageRenderMetrics(
           containerWidth,
           containerHeight,
@@ -54,8 +54,8 @@ export function usePdfRenderer({ pdfDataUrl, currentPage, zoom }: UsePdfRenderer
           zoom,
         );
 
-        const renderWidth = Math.floor(containerWidth);
-        const renderHeight = Math.floor(containerHeight);
+        const renderWidth = Math.max(1, Math.floor(pageMetrics.renderedWidth));
+        const renderHeight = Math.max(1, Math.floor(pageMetrics.renderedHeight));
         const imageData = wasm_render_page(
           pdfBytes,
           currentPage - 1,
@@ -72,7 +72,7 @@ export function usePdfRenderer({ pdfDataUrl, currentPage, zoom }: UsePdfRenderer
         canvas.width = renderWidth;
         canvas.height = renderHeight;
         context.clearRect(0, 0, canvas.width, canvas.height);
-        context.putImageData(imageData, pageMetrics.offsetX, pageMetrics.offsetY);
+        context.putImageData(imageData, 0, 0);
 
         if (!cancelled) {
           setMetrics(pageMetrics);
@@ -95,11 +95,10 @@ export function usePdfRenderer({ pdfDataUrl, currentPage, zoom }: UsePdfRenderer
     return () => {
       cancelled = true;
     };
-  }, [pdfDataUrl, currentPage, zoom]);
+  }, [pdfDataUrl, currentPage, zoom, viewportRef]);
 
   return {
     canvasRef,
-    containerRef,
     metrics,
     renderError,
     rendering,

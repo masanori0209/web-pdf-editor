@@ -140,6 +140,8 @@ function App() {
               pdfInfo={pdfInfo}
               pdfDataUrl={pdfDataUrl}
               currentPage={currentPage}
+              viewMode={viewMode}
+              selectedTool={selectedTool}
               textInsertions={textInsertions}
               annotations={annotations}
               onPageChange={setCurrentPage}

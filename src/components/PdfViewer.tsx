@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import type { PdfInfo, TextInsertion, TextAnnotation } from '../types/pdf';
+import React, { useRef, useState } from 'react';
+import type { PdfInfo, TextInsertion, TextAnnotation, ViewMode, EditTool } from '../types/pdf';
 import { usePdfRenderer } from '../hooks/usePdfRenderer';
+import { usePdfPanZoom } from '../hooks/usePdfPanZoom';
 import { pageToScreenPoint } from '../lib/coordinates';
 import { getOverlayFontFamily } from '../lib/fonts';
 import { PdfViewerMetricsProvider } from '../context/PdfViewerContext';
@@ -9,6 +10,8 @@ interface PdfViewerProps {
   pdfInfo: PdfInfo;
   pdfDataUrl: string;
   currentPage: number;
+  viewMode: ViewMode;
+  selectedTool: EditTool;
   textInsertions: TextInsertion[];
   annotations: TextAnnotation[];
   onPageChange: (page: number) => void;
@@ -19,16 +22,30 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   pdfInfo,
   pdfDataUrl,
   currentPage,
+  viewMode,
+  selectedTool,
   textInsertions,
   annotations,
   onPageChange,
   children,
 }) => {
+  const viewportRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
-  const { canvasRef, containerRef, metrics, renderError, rendering } = usePdfRenderer({
+  const panEnabled = viewMode === 'view' || selectedTool === 'select';
+
+  const { canvasRef, metrics, renderError, rendering } = usePdfRenderer({
     pdfDataUrl,
     currentPage,
     zoom,
+    viewportRef,
+  });
+
+  const { minZoom, maxZoom } = usePdfPanZoom({
+    viewportRef,
+    zoom,
+    setZoom,
+    panEnabled,
+    resetKey: String(currentPage),
   });
 
   const renderOverlayItem = (
@@ -55,6 +72,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       </div>
     );
   };
+
+  const stageStyle = metrics
+    ? { width: metrics.renderedWidth, height: metrics.renderedHeight }
+    : undefined;
 
   return (
     <div className="pdf-section">
@@ -87,7 +108,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           <button
             type="button"
             className="btn btn--outline btn--icon"
-            onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
+            onClick={() => setZoom((z) => Math.max(minZoom, Math.round((z - 0.1) * 10) / 10))}
             aria-label="ズームアウト"
           >
             −
@@ -96,17 +117,21 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           <button
             type="button"
             className="btn btn--outline btn--icon"
-            onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
+            onClick={() => setZoom((z) => Math.min(maxZoom, Math.round((z + 0.1) * 10) / 10))}
             aria-label="ズームイン"
           >
             +
           </button>
         </div>
+
+        <p className="pdf-toolbar__hint">
+          ドラッグで移動 · Space+ドラッグ · Ctrl+ホイール / ピンチでズーム
+        </p>
       </div>
 
       <div
-        className="pdf-container"
-        ref={containerRef}
+        className={`pdf-viewport ${panEnabled ? 'pdf-viewport--pannable' : ''}`}
+        ref={viewportRef}
         data-testid={metrics ? 'pdf-viewer-ready' : 'pdf-viewer-loading'}
         aria-label="PDFプレビュー"
       >
@@ -116,16 +141,19 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </div>
         )}
         {renderError && <div className="pdf-render-error">{renderError}</div>}
-        <canvas ref={canvasRef} className="pdf-canvas" />
-        {annotations.map((annotation, index) =>
-          renderOverlayItem(annotation, `annotation-${index}`, 'annotation-overlay'),
-        )}
-        {textInsertions.map((insertion, index) =>
-          renderOverlayItem(insertion, `insertion-${index}`, 'text-insertion-overlay'),
-        )}
-        <PdfViewerMetricsProvider metrics={metrics}>
-          {children}
-        </PdfViewerMetricsProvider>
+
+        <div className="pdf-stage" style={stageStyle}>
+          <canvas ref={canvasRef} className="pdf-canvas" />
+          {annotations.map((annotation, index) =>
+            renderOverlayItem(annotation, `annotation-${index}`, 'annotation-overlay'),
+          )}
+          {textInsertions.map((insertion, index) =>
+            renderOverlayItem(insertion, `insertion-${index}`, 'text-insertion-overlay'),
+          )}
+          <PdfViewerMetricsProvider metrics={metrics}>
+            {children}
+          </PdfViewerMetricsProvider>
+        </div>
       </div>
     </div>
   );

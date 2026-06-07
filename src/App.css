@@ -253,6 +253,38 @@
   font-variant-numeric: tabular-nums;
 }
 
+.pdf-toolbar__hint {
+  flex: 1 1 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  color: var(--text-subtle);
+}
+
+.pdf-viewport {
+  position: relative;
+  overflow: auto;
+  min-height: min(72vh, 820px);
+  max-height: min(72vh, 820px);
+  background: #e4e4e7;
+  touch-action: none;
+}
+
+.pdf-viewport--pannable {
+  cursor: grab;
+}
+
+.pdf-viewport.is-panning {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.pdf-stage {
+  position: relative;
+  margin: 0 auto;
+  min-width: min-content;
+}
+
 .pdf-container {
   position: relative;
   min-height: min(72vh, 820px);
@@ -261,8 +293,7 @@
 
 .pdf-canvas {
   display: block;
-  width: 100%;
-  height: min(72vh, 820px);
+  vertical-align: top;
 }
 
 .pdf-loading,
@@ -597,10 +628,13 @@
     display: none;
   }
 
-  .pdf-container,
-  .pdf-canvas {
+  .pdf-viewport {
     min-height: 50vh;
-    height: 50vh;
+    max-height: 50vh;
+  }
+
+  .pdf-toolbar__hint {
+    display: none;
   }
 
   .edit-tools {

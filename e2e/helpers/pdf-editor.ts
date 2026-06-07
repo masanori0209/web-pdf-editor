@@ -60,7 +60,7 @@ export async function addAnnotation(
 export async function addTextInsertion(
   page: Page,
   text: string,
-  position: { x: number; y: number } = { x: 320, y: 380 },
+  position: { x: number; y: number } = { x: 200, y: 380 },
 ): Promise<void> {
   await selectTool(page, 'テキスト挿入');
   await expect(editOverlay(page)).toBeVisible();

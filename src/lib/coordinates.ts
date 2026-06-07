@@ -7,8 +7,8 @@ export interface PageRenderMetrics {
   pageWidth: number;
   pageHeight: number;
   scale: number;
-  offsetX: number;
-  offsetY: number;
+  renderedWidth: number;
+  renderedHeight: number;
 }
 
 export function getPageRenderMetrics(
@@ -22,26 +22,24 @@ export function getPageRenderMetrics(
   const scale = baseScale * zoom;
   const renderedWidth = pageWidth * scale;
   const renderedHeight = pageHeight * scale;
-  const offsetX = (containerWidth - renderedWidth) / 2;
-  const offsetY = (containerHeight - renderedHeight) / 2;
 
   return {
     pageWidth,
     pageHeight,
     scale,
-    offsetX,
-    offsetY,
+    renderedWidth,
+    renderedHeight,
   };
 }
 
 export function screenToPagePoint(
   clientX: number,
   clientY: number,
-  containerRect: DOMRect,
+  stageRect: DOMRect,
   metrics: PageRenderMetrics,
 ): ScreenPoint {
-  const localX = clientX - containerRect.left - metrics.offsetX;
-  const localY = clientY - containerRect.top - metrics.offsetY;
+  const localX = clientX - stageRect.left;
+  const localY = clientY - stageRect.top;
 
   return {
     x: Math.max(0, Math.min(metrics.pageWidth, localX / metrics.scale)),
@@ -55,7 +53,7 @@ export function pageToScreenPoint(
   metrics: PageRenderMetrics,
 ): ScreenPoint {
   return {
-    x: metrics.offsetX + pageX * metrics.scale,
-    y: metrics.offsetY + pageY * metrics.scale,
+    x: pageX * metrics.scale,
+    y: pageY * metrics.scale,
   };
 }
