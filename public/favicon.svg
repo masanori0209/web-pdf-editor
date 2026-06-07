@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="PDF Editor">
+  <rect width="32" height="32" rx="8" fill="#2563eb"/>
+  <path
+    fill="#ffffff"
+    d="M9 7.5h9.2L22 11.3V24a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2Z"
+  />
+  <path fill="#dbeafe" d="M18.2 7.5V11h3.8Z"/>
+  <rect x="10.5" y="15" width="9" height="1.75" rx=".875" fill="#93c5fd"/>
+  <rect x="10.5" y="18.25" width="6.5" height="1.75" rx=".875" fill="#93c5fd"/>
+  <path
+    fill="#2563eb"
+    d="M19.5 19.2 22.8 22.5 27 17.2a1.35 1.35 0 0 0-1.9-1.9l-3.3 3.3-1.6-1.6a1.35 1.35 0 1 0-1.9 1.9Z"
+  />
+</svg>
