@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import type { PageRenderMetrics } from '../lib/coordinates';
 import { getPageRenderMetrics } from '../lib/coordinates';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+import {
+  fetchPdfBytes,
+  initPdfEngine,
+  wasm_get_page_dimensions,
+  wasm_render_page,
+} from '../lib/pdfProcessor';
 
 interface UsePdfRendererOptions {
   pdfDataUrl: string | null;
@@ -19,29 +21,46 @@ export function usePdfRenderer({ pdfDataUrl, currentPage, zoom }: UsePdfRenderer
   const [renderError, setRenderError] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
 
+  const hasRenderedRef = useRef(false);
+
   useEffect(() => {
     if (!pdfDataUrl || !canvasRef.current || !containerRef.current) return;
 
     let cancelled = false;
 
     const renderPage = async () => {
-      setRendering(true);
+      const isInitialRender = !hasRenderedRef.current;
+      if (isInitialRender) {
+        setRendering(true);
+      }
       setRenderError(null);
 
       try {
-        const loadingTask = pdfjsLib.getDocument(pdfDataUrl);
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(currentPage);
-        const viewport = page.getViewport({ scale: 1 });
+        await initPdfEngine();
+        const pdfBytes = await fetchPdfBytes(pdfDataUrl);
+        const pageDimensions = wasm_get_page_dimensions(pdfBytes, currentPage - 1) as {
+          width: number;
+          height: number;
+        };
+
         const container = containerRef.current!;
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight || 700;
         const pageMetrics = getPageRenderMetrics(
           containerWidth,
           containerHeight,
-          viewport.width,
-          viewport.height,
+          pageDimensions.width,
+          pageDimensions.height,
           zoom,
+        );
+
+        const renderWidth = Math.floor(containerWidth);
+        const renderHeight = Math.floor(containerHeight);
+        const imageData = wasm_render_page(
+          pdfBytes,
+          currentPage - 1,
+          renderWidth,
+          renderHeight,
         );
 
         const canvas = canvasRef.current!;
@@ -50,23 +69,14 @@ export function usePdfRenderer({ pdfDataUrl, currentPage, zoom }: UsePdfRenderer
           throw new Error('Canvas context unavailable');
         }
 
-        canvas.width = Math.floor(containerWidth);
-        canvas.height = Math.floor(containerHeight);
+        canvas.width = renderWidth;
+        canvas.height = renderHeight;
         context.clearRect(0, 0, canvas.width, canvas.height);
-
-        const renderViewport = page.getViewport({ scale: pageMetrics.scale });
-        const transform: number[] = pageMetrics.offsetX !== 0 || pageMetrics.offsetY !== 0
-          ? [1, 0, 0, 1, pageMetrics.offsetX, pageMetrics.offsetY]
-          : [];
-
-        await page.render({
-          canvasContext: context,
-          viewport: renderViewport,
-          transform,
-        }).promise;
+        context.putImageData(imageData, pageMetrics.offsetX, pageMetrics.offsetY);
 
         if (!cancelled) {
           setMetrics(pageMetrics);
+          hasRenderedRef.current = true;
         }
       } catch (error) {
         if (!cancelled) {

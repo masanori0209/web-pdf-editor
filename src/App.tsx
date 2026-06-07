@@ -93,7 +93,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>PDF Editor</h1>
-        <p>ブラウザ内で完結する PDF 編集ツール（pdf.js + pdf-lib）</p>
+        <p>ブラウザ内で完結する PDF 編集ツール（Rust WASM + PDFium）</p>
       </header>
 
       <main className="main-content">
