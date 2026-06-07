@@ -69,10 +69,10 @@ export const TextInputPopup: React.FC<TextInputPopupProps> = ({
           }
         />
         <div className="popup-actions">
-          <button type="button" onClick={onConfirm} className="confirm-btn">
+          <button type="button" onClick={onConfirm} className="btn btn--primary">
             追加
           </button>
-          <button type="button" onClick={onCancel} className="cancel-btn">
+          <button type="button" onClick={onCancel} className="btn btn--outline">
             キャンセル
           </button>
         </div>

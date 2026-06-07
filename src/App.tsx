@@ -67,6 +67,12 @@ function App() {
     resetEditState();
   };
 
+  const handleOpenOtherFile = () => {
+    if (window.confirm('別のファイルを開きますか？未保存の編集内容は失われます。')) {
+      handleReset();
+    }
+  };
+
   const handleSave = async () => {
     try {
       await generateEditedPdf();
@@ -90,10 +96,34 @@ function App() {
   const isModified = pdfProcessor ? pdfProcessor.is_modified() : false;
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>PDF Editor</h1>
-        <p>ブラウザ内で完結する PDF 編集ツール（Rust WASM + PDFium）</p>
+    <div className="app-shell">
+      <header className="app-bar">
+        <div className="app-bar__brand">
+          <h1>PDF Editor</h1>
+          {pdfFile && pdfInfo && (
+            <span className="app-bar__meta">
+              {pdfFile.name}
+              <span aria-hidden="true"> · </span>
+              <span>ページ数: {pdfInfo.page_count}</span>
+            </span>
+          )}
+        </div>
+
+        {pdfFile && pdfInfo && (
+          <div className="app-bar__actions">
+            <button
+              type="button"
+              onClick={toggleEditMode}
+              className={`btn btn--primary ${viewMode === 'edit' ? 'is-active' : ''}`}
+              aria-pressed={viewMode === 'edit'}
+            >
+              {viewMode === 'view' ? '編集モード' : '表示モード'}
+            </button>
+            <button type="button" onClick={handleOpenOtherFile} className="btn btn--ghost">
+              別のファイル
+            </button>
+          </div>
+        )}
       </header>
 
       <main className="main-content">
@@ -107,16 +137,12 @@ function App() {
         ) : pdfInfo && pdfDataUrl ? (
           <div className={`editor-layout ${viewMode === 'edit' ? 'edit-mode' : ''}`}>
             <PdfViewer
-              pdfFile={pdfFile}
               pdfInfo={pdfInfo}
               pdfDataUrl={pdfDataUrl}
-              viewMode={viewMode}
               currentPage={currentPage}
               textInsertions={textInsertions}
               annotations={annotations}
               onPageChange={setCurrentPage}
-              onToggleEditMode={toggleEditMode}
-              onReset={handleReset}
             >
               <EditOverlay
                 viewMode={viewMode}

@@ -51,7 +51,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
     return (
       <div className="error" role="alert">
         <p>エラー: {displayError}</p>
-        <button type="button" onClick={() => { setLocalError(null); onReset(); }} className="reset-button">
+        <button type="button" onClick={() => { setLocalError(null); onReset(); }} className="btn btn--outline">
           リセット
         </button>
       </div>

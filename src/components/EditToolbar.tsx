@@ -20,6 +20,12 @@ interface EditToolbarProps {
   isModified: boolean;
 }
 
+const TOOL_HINTS: Record<EditTool, string> = {
+  select: 'PDF上をクリックしても編集は行われません。',
+  annotation: 'PDF上をクリックして注釈テキストを入力します。',
+  text: 'PDF上をクリックしてテキストを挿入します。',
+};
+
 export const EditToolbar: React.FC<EditToolbarProps> = ({
   selectedTool,
   onToolSelect,
@@ -41,10 +47,10 @@ export const EditToolbar: React.FC<EditToolbarProps> = ({
     <aside className="edit-tools" aria-label="編集ツール">
       <div className="tool-group">
         <h3>ツール</h3>
-        <div className="tool-buttons">
+        <div className="segment-control" role="group" aria-label="ツール選択">
           <button
             type="button"
-            className={`tool-btn ${selectedTool === 'select' ? 'active' : ''}`}
+            className={`segment-btn ${selectedTool === 'select' ? 'active' : ''}`}
             onClick={() => onToolSelect('select')}
             aria-pressed={selectedTool === 'select'}
           >
@@ -52,7 +58,7 @@ export const EditToolbar: React.FC<EditToolbarProps> = ({
           </button>
           <button
             type="button"
-            className={`tool-btn ${selectedTool === 'annotation' ? 'active' : ''}`}
+            className={`segment-btn ${selectedTool === 'annotation' ? 'active' : ''}`}
             onClick={() => onToolSelect('annotation')}
             aria-pressed={selectedTool === 'annotation'}
           >
@@ -60,18 +66,14 @@ export const EditToolbar: React.FC<EditToolbarProps> = ({
           </button>
           <button
             type="button"
-            className={`tool-btn ${selectedTool === 'text' ? 'active' : ''}`}
+            className={`segment-btn ${selectedTool === 'text' ? 'active' : ''}`}
             onClick={() => onToolSelect('text')}
             aria-pressed={selectedTool === 'text'}
           >
             テキスト挿入
           </button>
         </div>
-        <p className="tool-hint">
-          {selectedTool === 'select' && 'PDF上をクリックしても編集は行われません。'}
-          {selectedTool === 'annotation' && 'PDF上をクリックして注釈テキストを入力します。'}
-          {selectedTool === 'text' && 'PDF上をクリックしてテキストを挿入します。'}
-        </p>
+        <p className="tool-hint">{TOOL_HINTS[selectedTool]}</p>
       </div>
 
       {(selectedTool === 'annotation' || selectedTool === 'text') && (
