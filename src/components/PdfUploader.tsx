@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 interface PdfUploaderProps {
@@ -14,51 +14,69 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
   error,
   onReset,
 }) => {
-  const onDrop = React.useCallback((acceptedFiles: File[]) => {
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setLocalError(null);
     const file = acceptedFiles[0];
     if (file) {
       onFileSelect(file);
     }
   }, [onFileSelect]);
 
+  const onDropRejected = useCallback(() => {
+    setLocalError('PDFファイルを選択してください。');
+  }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected,
     accept: {
-      'application/pdf': ['.pdf']
+      'application/pdf': ['.pdf'],
     },
-    multiple: false
+    multiple: false,
   });
+
+  const displayError = error ?? localError;
 
   if (loading) {
     return (
-      <div className="loading">
+      <div className="loading" role="status" aria-live="polite">
         <p>PDFを処理中...</p>
       </div>
     );
   }
 
-  if (error) {
+  if (displayError) {
     return (
-      <div className="error">
-        <p>エラー: {error}</p>
-        <button onClick={onReset} className="reset-button">リセット</button>
+      <div className="error" role="alert">
+        <p>エラー: {displayError}</p>
+        <button type="button" onClick={() => { setLocalError(null); onReset(); }} className="reset-button">
+          リセット
+        </button>
       </div>
     );
   }
 
   return (
     <div className="upload-section">
-      <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
-        <input {...getInputProps()} />
+      <div
+        {...getRootProps()}
+        className={`dropzone ${isDragActive ? 'active' : ''}`}
+        role="button"
+        aria-label="PDFファイルをアップロード"
+      >
+        <input {...getInputProps()} aria-label="PDFファイル選択" />
         {isDragActive ? (
           <p>PDFファイルをここにドロップしてください...</p>
         ) : (
           <div>
             <p>PDFファイルをドラッグ&ドロップするか、クリックして選択してください</p>
-            <button className="upload-button">ファイルを選択</button>
+            <p className="upload-hint">最大 25MB まで対応</p>
+            <button type="button" className="upload-button">ファイルを選択</button>
           </div>
         )}
       </div>
     </div>
   );
-}; 
+};

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { PendingEdit, EditTool } from '../types/pdf';
+import { pageToScreenPoint } from '../lib/coordinates';
+import { usePdfViewerMetrics } from '../context/PdfViewerContext';
 
 interface TextInputPopupProps {
   isVisible: boolean;
@@ -20,10 +22,22 @@ export const TextInputPopup: React.FC<TextInputPopupProps> = ({
   onConfirm,
   onCancel,
 }) => {
-  if (!isVisible || !pendingEdit) return null;
+  const metrics = usePdfViewerMetrics();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isVisible) {
+      inputRef.current?.focus();
+    }
+  }, [isVisible]);
+
+  if (!isVisible || !pendingEdit || !metrics) return null;
+
+  const screenPoint = pageToScreenPoint(pendingEdit.x, pendingEdit.y, metrics);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       onConfirm();
     } else if (e.key === 'Escape') {
       onCancel();
@@ -34,35 +48,35 @@ export const TextInputPopup: React.FC<TextInputPopupProps> = ({
     <div
       className="text-input-popup"
       style={{
-        left: pendingEdit.x,
-        top: pendingEdit.y,
+        left: screenPoint.x,
+        top: screenPoint.y,
       }}
+      role="dialog"
+      aria-label={selectedTool === 'annotation' ? '注釈を追加' : 'テキストを挿入'}
     >
       <div className="popup-content">
-        <h4>
-          {selectedTool === 'annotation' ? '注釈を追加' : 'テキストを挿入'}
-        </h4>
+        <h4>{selectedTool === 'annotation' ? '注釈を追加' : 'テキストを挿入'}</h4>
         <input
+          ref={inputRef}
           type="text"
           value={textInput}
           onChange={(e) => onTextInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={
-            selectedTool === 'annotation' 
-              ? '注釈テキストを入力...' 
+            selectedTool === 'annotation'
+              ? '注釈テキストを入力...'
               : '挿入するテキストを入力...'
           }
-          autoFocus
         />
         <div className="popup-actions">
-          <button onClick={onConfirm} className="confirm-btn">
+          <button type="button" onClick={onConfirm} className="confirm-btn">
             追加
           </button>
-          <button onClick={onCancel} className="cancel-btn">
+          <button type="button" onClick={onCancel} className="cancel-btn">
             キャンセル
           </button>
         </div>
       </div>
     </div>
   );
-}; 
+};

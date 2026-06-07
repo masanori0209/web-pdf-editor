@@ -1,12 +1,10 @@
-import React from 'react';
+import { useEffect } from 'react';
 import './App.css';
-
-// Hooks
-import { useWasm } from './hooks/useWasm';
+import { preloadJapaneseFont } from './lib/fonts';
 import { usePdfProcessor } from './hooks/usePdfProcessor';
 import { useEditTools } from './hooks/useEditTools';
+import { useToast } from './components/Toast';
 
-// Components
 import { PdfUploader } from './components/PdfUploader';
 import { PdfViewer } from './components/PdfViewer';
 import { EditToolbar } from './components/EditToolbar';
@@ -14,24 +12,27 @@ import { EditOverlay } from './components/EditOverlay';
 import { TextInputPopup } from './components/TextInputPopup';
 
 function App() {
-  // WebAssembly
-  const { wasmModule, error: wasmError } = useWasm();
+  useEffect(() => {
+    void preloadJapaneseFont().catch((error) => {
+      console.warn('Japanese font preload failed:', error);
+    });
+  }, []);
 
-  // PDF処理
+  const { showToast } = useToast();
+
   const {
     pdfFile,
     pdfProcessor,
     pdfInfo,
     pdfDataUrl,
     loading,
-    error: pdfError,
+    error,
     processPdf,
     resetPdf,
     updatePdfPreview,
     generateEditedPdf,
-  } = usePdfProcessor(wasmModule);
+  } = usePdfProcessor();
 
-  // 編集ツール
   const {
     viewMode,
     annotations,
@@ -59,50 +60,40 @@ function App() {
     clearAllEdits,
     cancelTextInput,
     handleOverlayClick,
-  } = useEditTools(pdfProcessor, updatePdfPreview);
+  } = useEditTools(pdfProcessor, updatePdfPreview, showToast);
 
-  // エラーハンドリング
-  const error = wasmError || pdfError;
-
-  // リセット処理
   const handleReset = () => {
     resetPdf();
     resetEditState();
   };
 
-  // 保存処理
   const handleSave = async () => {
     try {
       await generateEditedPdf();
-    } catch (error) {
-      console.error('Save failed:', error);
-      alert('保存に失敗しました');
+      showToast('PDFをダウンロードしました', 'success');
+    } catch (saveError) {
+      console.error('Save failed:', saveError);
+      showToast(saveError instanceof Error ? saveError.message : '保存に失敗しました', 'error');
     }
   };
 
-  // テキスト入力確定
   const handleConfirmTextInput = async () => {
     if (!pendingEdit) return;
 
-    try {
-      if (selectedTool === 'annotation') {
-        await addTextAnnotation(pendingEdit.x, pendingEdit.y);
-      } else if (selectedTool === 'text') {
-        await addTextInsertion(pendingEdit.x, pendingEdit.y);
-      }
-    } catch (error) {
-      console.error('Failed to add edit:', error);
+    if (selectedTool === 'annotation') {
+      await addTextAnnotation(pendingEdit.x, pendingEdit.y);
+    } else if (selectedTool === 'text') {
+      await addTextInsertion(pendingEdit.x, pendingEdit.y);
     }
   };
 
-  // 編集状態の確認
   const isModified = pdfProcessor ? pdfProcessor.is_modified() : false;
 
   return (
     <div className="App">
       <header className="App-header">
         <h1>PDF Editor</h1>
-        <p>WebAssemblyを使用したブラウザ内PDF編集ツール</p>
+        <p>ブラウザ内で完結する PDF 編集ツール（pdf.js + pdf-lib）</p>
       </header>
 
       <main className="main-content">
@@ -114,55 +105,56 @@ function App() {
             onReset={handleReset}
           />
         ) : pdfInfo && pdfDataUrl ? (
-          <PdfViewer
-            pdfFile={pdfFile}
-            pdfInfo={pdfInfo}
-            pdfDataUrl={pdfDataUrl}
-            viewMode={viewMode}
-            currentPage={currentPage}
-            textInsertions={textInsertions}
-            onPageChange={setCurrentPage}
-            onToggleEditMode={toggleEditMode}
-            onReset={handleReset}
-          >
-            <EditOverlay
+          <div className={`editor-layout ${viewMode === 'edit' ? 'edit-mode' : ''}`}>
+            <PdfViewer
+              pdfFile={pdfFile}
+              pdfInfo={pdfInfo}
+              pdfDataUrl={pdfDataUrl}
               viewMode={viewMode}
-              selectedTool={selectedTool}
-              onOverlayClick={handleOverlayClick}
-            />
-            <TextInputPopup
-              isVisible={isAddingText}
-              pendingEdit={pendingEdit}
-              selectedTool={selectedTool}
-              textInput={textInput}
-              onTextInputChange={setTextInput}
-              onConfirm={handleConfirmTextInput}
-              onCancel={cancelTextInput}
-            />
-          </PdfViewer>
-        ) : null}
+              currentPage={currentPage}
+              textInsertions={textInsertions}
+              annotations={annotations}
+              onPageChange={setCurrentPage}
+              onToggleEditMode={toggleEditMode}
+              onReset={handleReset}
+            >
+              <EditOverlay
+                viewMode={viewMode}
+                selectedTool={selectedTool}
+                onOverlayClick={handleOverlayClick}
+              />
+              <TextInputPopup
+                isVisible={isAddingText}
+                pendingEdit={pendingEdit}
+                selectedTool={selectedTool}
+                textInput={textInput}
+                onTextInputChange={setTextInput}
+                onConfirm={handleConfirmTextInput}
+                onCancel={cancelTextInput}
+              />
+            </PdfViewer>
 
-        {viewMode === 'edit' && pdfProcessor && (
-          <EditToolbar
-            selectedTool={selectedTool}
-            onToolSelect={setSelectedTool}
-            textInput={textInput}
-            onTextInputChange={setTextInput}
-            fontSize={fontSize}
-            onFontSizeChange={setFontSize}
-            textColor={textColor}
-            onTextColorChange={setTextColor}
-            fontFamily={fontFamily}
-            onFontFamilyChange={setFontFamily}
-            annotations={annotations}
-            textInsertions={textInsertions}
-            onRemoveAnnotation={removeAnnotation}
-            onRemoveTextInsertion={removeTextInsertion}
-            onClearAllEdits={clearAllEdits}
-            onSave={handleSave}
-            isModified={isModified}
-          />
-        )}
+            {viewMode === 'edit' && pdfProcessor && (
+              <EditToolbar
+                selectedTool={selectedTool}
+                onToolSelect={setSelectedTool}
+                fontSize={fontSize}
+                onFontSizeChange={setFontSize}
+                textColor={textColor}
+                onTextColorChange={setTextColor}
+                fontFamily={fontFamily}
+                onFontFamilyChange={setFontFamily}
+                annotations={annotations}
+                textInsertions={textInsertions}
+                onRemoveAnnotation={removeAnnotation}
+                onRemoveTextInsertion={removeTextInsertion}
+                onClearAllEdits={clearAllEdits}
+                onSave={handleSave}
+                isModified={isModified}
+              />
+            )}
+          </div>
+        ) : null}
       </main>
     </div>
   );

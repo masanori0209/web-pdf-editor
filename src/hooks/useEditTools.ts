@@ -1,7 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { TextAnnotation, TextInsertion, EditTool, ViewMode, PendingEdit } from '../types/pdf';
+import type { PdfProcessor } from '../lib/pdfProcessor';
 
-export const useEditTools = (pdfProcessor: any, updatePdfPreview?: () => void) => {
+export const useEditTools = (
+  pdfProcessor: PdfProcessor | null,
+  updatePdfPreview?: () => void | Promise<void>,
+  showToast?: (message: string, type?: 'info' | 'success' | 'error') => void,
+) => {
   const [viewMode, setViewMode] = useState<ViewMode>('view');
   const [annotations, setAnnotations] = useState<TextAnnotation[]>([]);
   const [textInsertions, setTextInsertions] = useState<TextInsertion[]>([]);
@@ -9,33 +14,35 @@ export const useEditTools = (pdfProcessor: any, updatePdfPreview?: () => void) =
   const [textInput, setTextInput] = useState('');
   const [fontSize, setFontSize] = useState(12);
   const [textColor, setTextColor] = useState('#000000');
-  const [fontFamily, setFontFamily] = useState('Helvetica');
+  const [fontFamily, setFontFamily] = useState('Noto Sans JP');
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddingText, setIsAddingText] = useState(false);
   const [pendingEdit, setPendingEdit] = useState<PendingEdit | null>(null);
 
-  // 既存の編集内容を読み込み
   useEffect(() => {
     if (pdfProcessor) {
-      try {
-        const existingAnnotations = pdfProcessor.get_annotations();
-        const existingInsertions = pdfProcessor.get_text_insertions();
-        setAnnotations(existingAnnotations);
-        setTextInsertions(existingInsertions);
-      } catch (error) {
-        console.error('Failed to load existing edits:', error);
-      }
+      setAnnotations(pdfProcessor.get_annotations());
+      setTextInsertions(pdfProcessor.get_text_insertions());
     }
   }, [pdfProcessor]);
 
-  const toggleEditMode = useCallback(() => {
-    setViewMode(viewMode === 'view' ? 'edit' : 'view');
-    if (viewMode === 'edit') {
-      setSelectedTool('select');
-      setIsAddingText(false);
-      setPendingEdit(null);
+  const refreshPreview = useCallback(async () => {
+    if (updatePdfPreview) {
+      await updatePdfPreview();
     }
-  }, [viewMode]);
+  }, [updatePdfPreview]);
+
+  const toggleEditMode = useCallback(() => {
+    setViewMode((prev) => {
+      if (prev === 'edit') {
+        setSelectedTool('select');
+        setIsAddingText(false);
+        setPendingEdit(null);
+        return 'view';
+      }
+      return 'edit';
+    });
+  }, []);
 
   const resetEditState = useCallback(() => {
     setViewMode('view');
@@ -45,12 +52,17 @@ export const useEditTools = (pdfProcessor: any, updatePdfPreview?: () => void) =
     setIsAddingText(false);
     setPendingEdit(null);
     setTextInput('');
+    setCurrentPage(1);
   }, []);
 
-  // 注釈を追加
   const addTextAnnotation = useCallback(async (x: number, y: number) => {
+    if (!pdfProcessor) {
+      showToast?.('PDFが読み込まれていません', 'error');
+      return;
+    }
+
     if (!textInput.trim()) {
-      alert('テキストを入力してください');
+      showToast?.('テキストを入力してください', 'error');
       return;
     }
 
@@ -58,33 +70,34 @@ export const useEditTools = (pdfProcessor: any, updatePdfPreview?: () => void) =
       page: currentPage,
       x,
       y,
-      text: textInput,
+      text: textInput.trim(),
       font_size: fontSize,
       color: textColor,
+      font_family: fontFamily,
     };
 
     try {
       await pdfProcessor.add_text_annotation(annotation);
-      const updatedAnnotations = pdfProcessor.get_annotations();
-      setAnnotations(updatedAnnotations);
+      setAnnotations(pdfProcessor.get_annotations());
       setTextInput('');
       setIsAddingText(false);
       setPendingEdit(null);
-      
-      // PDFプレビューを更新
-      if (updatePdfPreview) {
-        updatePdfPreview();
-      }
-    } catch (error) {
-      console.error('Failed to add annotation:', error);
-      alert('注釈の追加に失敗しました');
+      await refreshPreview();
+      showToast?.('注釈を追加しました', 'success');
+    } catch (annotationError) {
+      console.error('Failed to add annotation:', annotationError);
+      showToast?.('注釈の追加に失敗しました', 'error');
     }
-  }, [pdfProcessor, textInput, fontSize, textColor, currentPage]);
+  }, [pdfProcessor, textInput, fontSize, textColor, fontFamily, currentPage, refreshPreview, showToast]);
 
-  // テキスト挿入を追加
   const addTextInsertion = useCallback(async (x: number, y: number) => {
+    if (!pdfProcessor) {
+      showToast?.('PDFが読み込まれていません', 'error');
+      return;
+    }
+
     if (!textInput.trim()) {
-      alert('テキストを入力してください');
+      showToast?.('テキストを入力してください', 'error');
       return;
     }
 
@@ -92,7 +105,7 @@ export const useEditTools = (pdfProcessor: any, updatePdfPreview?: () => void) =
       page: currentPage,
       x,
       y,
-      text: textInput,
+      text: textInput.trim(),
       font_size: fontSize,
       color: textColor,
       font_family: fontFamily,
@@ -100,80 +113,74 @@ export const useEditTools = (pdfProcessor: any, updatePdfPreview?: () => void) =
 
     try {
       await pdfProcessor.add_text_insertion(insertion);
-      const updatedInsertions = pdfProcessor.get_text_insertions();
-      setTextInsertions(updatedInsertions);
+      setTextInsertions(pdfProcessor.get_text_insertions());
       setTextInput('');
       setIsAddingText(false);
       setPendingEdit(null);
-      
-      // PDFプレビューを更新
-      if (updatePdfPreview) {
-        updatePdfPreview();
-      }
-    } catch (error) {
-      console.error('Failed to add text insertion:', error);
-      alert('テキスト挿入に失敗しました');
+      await refreshPreview();
+      showToast?.('テキストを挿入しました', 'success');
+    } catch (insertionError) {
+      console.error('Failed to add text insertion:', insertionError);
+      showToast?.('テキスト挿入に失敗しました', 'error');
     }
-  }, [pdfProcessor, textInput, fontSize, textColor, fontFamily, currentPage]);
+  }, [pdfProcessor, textInput, fontSize, textColor, fontFamily, currentPage, refreshPreview, showToast]);
 
-  // 注釈を削除
   const removeAnnotation = useCallback(async (index: number) => {
+    if (!pdfProcessor) return;
+
     try {
       const success = pdfProcessor.remove_annotation(index);
       if (success) {
-        const updatedAnnotations = pdfProcessor.get_annotations();
-        setAnnotations(updatedAnnotations);
+        setAnnotations(pdfProcessor.get_annotations());
+        await refreshPreview();
+        showToast?.('注釈を削除しました', 'info');
       }
-    } catch (error) {
-      console.error('Failed to remove annotation:', error);
+    } catch (removeError) {
+      console.error('Failed to remove annotation:', removeError);
+      showToast?.('注釈の削除に失敗しました', 'error');
     }
-  }, [pdfProcessor]);
+  }, [pdfProcessor, refreshPreview, showToast]);
 
-  // テキスト挿入を削除
   const removeTextInsertion = useCallback(async (index: number) => {
+    if (!pdfProcessor) return;
+
     try {
       const success = pdfProcessor.remove_text_insertion(index);
       if (success) {
-        const updatedInsertions = pdfProcessor.get_text_insertions();
-        setTextInsertions(updatedInsertions);
+        setTextInsertions(pdfProcessor.get_text_insertions());
+        await refreshPreview();
+        showToast?.('テキスト挿入を削除しました', 'info');
       }
-    } catch (error) {
-      console.error('Failed to remove text insertion:', error);
+    } catch (removeError) {
+      console.error('Failed to remove text insertion:', removeError);
+      showToast?.('テキスト挿入の削除に失敗しました', 'error');
     }
-  }, [pdfProcessor]);
+  }, [pdfProcessor, refreshPreview, showToast]);
 
-  // 全ての編集をクリア
-  const clearAllEdits = useCallback(() => {
+  const clearAllEdits = useCallback(async () => {
+    if (!pdfProcessor) return;
+    if (!window.confirm('すべての編集内容を削除しますか？')) return;
+
     pdfProcessor.clear_all_edits();
     setAnnotations([]);
     setTextInsertions([]);
-  }, [pdfProcessor]);
+    await refreshPreview();
+    showToast?.('編集内容をすべて削除しました', 'info');
+  }, [pdfProcessor, refreshPreview, showToast]);
 
-  // テキスト入力をキャンセル
   const cancelTextInput = useCallback(() => {
     setIsAddingText(false);
     setPendingEdit(null);
-    setTextInput('');
   }, []);
 
-  // PDF上でのクリックハンドラ
   const handleOverlayClick = useCallback((x: number, y: number) => {
     if (viewMode !== 'edit' || selectedTool === 'select') return;
 
-    if (isAddingText) {
-      if (selectedTool === 'annotation') {
-        addTextAnnotation(x, y);
-      } else if (selectedTool === 'text') {
-        addTextInsertion(x, y);
-      }
-    } else {
-      setPendingEdit({ x, y, page: currentPage });
-      setIsAddingText(true);
-    }
-  }, [viewMode, selectedTool, isAddingText, addTextAnnotation, addTextInsertion, currentPage]);
+    setPendingEdit({ x, y, page: currentPage });
+    setIsAddingText(true);
+  }, [viewMode, selectedTool, currentPage]);
 
   return {
-    // State
     viewMode,
     annotations,
     textInsertions,
@@ -185,16 +192,12 @@ export const useEditTools = (pdfProcessor: any, updatePdfPreview?: () => void) =
     currentPage,
     isAddingText,
     pendingEdit,
-    
-    // Setters
     setSelectedTool,
     setTextInput,
     setFontSize,
     setTextColor,
     setFontFamily,
     setCurrentPage,
-    
-    // Actions
     toggleEditMode,
     resetEditState,
     addTextAnnotation,
@@ -205,4 +208,4 @@ export const useEditTools = (pdfProcessor: any, updatePdfPreview?: () => void) =
     cancelTextInput,
     handleOverlayClick,
   };
-}; 
+};

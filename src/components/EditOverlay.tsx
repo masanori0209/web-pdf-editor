@@ -1,5 +1,7 @@
 import React from 'react';
 import type { ViewMode, EditTool } from '../types/pdf';
+import { screenToPagePoint } from '../lib/coordinates';
+import { usePdfViewerMetrics } from '../context/PdfViewerContext';
 
 interface EditOverlayProps {
   viewMode: ViewMode;
@@ -12,14 +14,14 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
   selectedTool,
   onOverlayClick,
 }) => {
+  const metrics = usePdfViewerMetrics();
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (viewMode !== 'edit' || selectedTool === 'select') return;
+    if (viewMode !== 'edit' || selectedTool === 'select' || !metrics) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    onOverlayClick(x, y);
+    const pagePoint = screenToPagePoint(e.clientX, e.clientY, rect, metrics);
+    onOverlayClick(pagePoint.x, pagePoint.y);
   };
 
   if (viewMode !== 'edit') return null;
@@ -28,9 +30,10 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
     <div
       className={`pdf-overlay ${selectedTool !== 'select' ? 'clickable' : ''}`}
       onClick={handleClick}
+      role="presentation"
       style={{
         cursor: selectedTool === 'select' ? 'default' : 'crosshair',
       }}
     />
   );
-}; 
+};
