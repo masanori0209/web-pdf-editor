@@ -3,7 +3,7 @@ mod edit;
 use edit::build_edited_pdf;
 use once_cell::sync::OnceCell;
 use pdfium_render::prelude::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use wasm_bindgen::prelude::*;
 
@@ -29,6 +29,29 @@ pub struct TextInsertion {
     pub font_size: f32,
     pub color: String,
     pub font_family: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct EditObject {
+    pub id: String,
+    pub page: u16,
+    pub kind: String,
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub text: String,
+    pub font_size: f32,
+    pub color: String,
+    pub font_family: String,
+    pub bold: bool,
+    pub italic: bool,
+    pub strike_through: bool,
+    pub stroke_color: String,
+    pub fill_color: String,
+    pub fill_enabled: bool,
+    pub stroke_width: f32,
 }
 
 #[derive(Serialize)]
@@ -125,6 +148,7 @@ pub struct WasmPdfProcessor {
     original_bytes: Vec<u8>,
     annotations: Vec<TextAnnotation>,
     text_insertions: Vec<TextInsertion>,
+    edit_objects: Vec<EditObject>,
     modified: bool,
 }
 
@@ -140,6 +164,7 @@ impl WasmPdfProcessor {
             original_bytes: data.to_vec(),
             annotations: Vec::new(),
             text_insertions: Vec::new(),
+            edit_objects: Vec::new(),
             modified: false,
         })
     }
@@ -166,6 +191,10 @@ impl WasmPdfProcessor {
 
     pub fn get_text_insertions(&self) -> Result<JsValue, JsValue> {
         serde_wasm_bindgen::to_value(&self.text_insertions).map_err(|e| js_err(e))
+    }
+
+    pub fn get_edit_objects(&self) -> Result<JsValue, JsValue> {
+        serde_wasm_bindgen::to_value(&self.edit_objects).map_err(|e| js_err(e))
     }
 
     pub fn add_text_annotation(
@@ -212,12 +241,44 @@ impl WasmPdfProcessor {
         self.modified = true;
     }
 
+    pub fn add_edit_object(&mut self, edit_object: JsValue) -> Result<(), JsValue> {
+        let edit_object: EditObject =
+            serde_wasm_bindgen::from_value(edit_object).map_err(|e| js_err(e))?;
+        self.edit_objects.push(edit_object);
+        self.modified = true;
+        Ok(())
+    }
+
+    pub fn update_edit_object(&mut self, id: String, edit_object: JsValue) -> Result<bool, JsValue> {
+        let edit_object: EditObject =
+            serde_wasm_bindgen::from_value(edit_object).map_err(|e| js_err(e))?;
+        if let Some(index) = self.edit_objects.iter().position(|item| item.id == id) {
+            self.edit_objects[index] = edit_object;
+            self.modified = true;
+            return Ok(true);
+        }
+        Ok(false)
+    }
+
+    pub fn remove_edit_object(&mut self, id: String) -> bool {
+        if let Some(index) = self.edit_objects.iter().position(|item| item.id == id) {
+            self.edit_objects.remove(index);
+            self.modified = !self.annotations.is_empty()
+                || !self.text_insertions.is_empty()
+                || !self.edit_objects.is_empty();
+            return true;
+        }
+        false
+    }
+
     pub fn remove_annotation(&mut self, index: usize) -> bool {
         if index >= self.annotations.len() {
             return false;
         }
         self.annotations.remove(index);
-        self.modified = !self.annotations.is_empty() || !self.text_insertions.is_empty();
+        self.modified = !self.annotations.is_empty()
+            || !self.text_insertions.is_empty()
+            || !self.edit_objects.is_empty();
         true
     }
 
@@ -226,13 +287,16 @@ impl WasmPdfProcessor {
             return false;
         }
         self.text_insertions.remove(index);
-        self.modified = !self.annotations.is_empty() || !self.text_insertions.is_empty();
+        self.modified = !self.annotations.is_empty()
+            || !self.text_insertions.is_empty()
+            || !self.edit_objects.is_empty();
         true
     }
 
     pub fn clear_all_edits(&mut self) {
         self.annotations.clear();
         self.text_insertions.clear();
+        self.edit_objects.clear();
         self.modified = false;
     }
 
@@ -242,6 +306,7 @@ impl WasmPdfProcessor {
             &self.original_bytes,
             &self.annotations,
             &self.text_insertions,
+            &self.edit_objects,
             &font_bytes,
         )
     }

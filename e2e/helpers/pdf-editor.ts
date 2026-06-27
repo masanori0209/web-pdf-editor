@@ -34,12 +34,40 @@ export async function enterViewMode(page: Page): Promise<void> {
   await expect(page.getByLabel('編集ツール')).not.toBeVisible();
 }
 
-export async function selectTool(page: Page, tool: '注釈' | 'テキスト挿入' | '選択'): Promise<void> {
+export type EditorToolLabel =
+  | '注釈'
+  | 'テキスト挿入'
+  | '選択'
+  | '四角'
+  | '丸'
+  | '直線'
+  | '矢印'
+  | '吹き出し'
+  | '斜線';
+
+export async function selectTool(page: Page, tool: EditorToolLabel): Promise<void> {
   await page.getByRole('button', { name: tool }).click();
 }
 
 export function editOverlay(page: Page) {
   return page.locator('.pdf-overlay.clickable');
+}
+
+export function pdfOverlay(page: Page) {
+  return page.locator('.pdf-overlay');
+}
+
+export async function dragOnPdfOverlay(
+  page: Page,
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+): Promise<void> {
+  const box = await pdfOverlay(page).boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + start.x, box!.y + start.y);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + end.x, box!.y + end.y, { steps: 8 });
+  await page.mouse.up();
 }
 
 export async function addAnnotation(
@@ -70,6 +98,18 @@ export async function addTextInsertion(
   await dialog.locator('input').fill(text);
   await dialog.getByRole('button', { name: '追加' }).click();
   await expect(page.getByText('テキストを挿入しました')).toBeVisible();
+}
+
+export async function addShape(
+  page: Page,
+  tool: Exclude<EditorToolLabel, '注釈' | 'テキスト挿入' | '選択'>,
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+): Promise<void> {
+  await selectTool(page, tool);
+  await expect(editOverlay(page)).toBeVisible();
+  await dragOnPdfOverlay(page, start, end);
+  await expect(page.getByText('編集オブジェクトを追加しました')).toBeVisible();
 }
 
 export async function goToPage(page: Page, direction: 'next' | 'prev'): Promise<void> {

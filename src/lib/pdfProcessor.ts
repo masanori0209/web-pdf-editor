@@ -6,7 +6,7 @@ import init, {
   wasm_get_page_dimensions,
 } from '../wasm/pkg/pdf_wasm.js';
 import wasmUrl from '../wasm/pkg/pdf_wasm_bg.wasm?url';
-import type { PdfInfo, TextAnnotation, TextInsertion } from '../types/pdf';
+import type { EditObject, PdfInfo, TextAnnotation, TextInsertion } from '../types/pdf';
 import { loadJapaneseFontBytes } from './fonts';
 
 declare global {
@@ -97,6 +97,10 @@ export class PdfProcessor {
     return this.inner.get_text_insertions() as TextInsertion[];
   }
 
+  get_edit_objects(): EditObject[] {
+    return this.inner.get_edit_objects() as EditObject[];
+  }
+
   is_modified(): boolean {
     return this.inner.is_modified();
   }
@@ -125,6 +129,27 @@ export class PdfProcessor {
       insertion.font_family,
     );
     this.cachedDataUrl = null;
+  }
+
+  async add_edit_object(editObject: EditObject): Promise<void> {
+    this.inner.add_edit_object(editObject);
+    this.cachedDataUrl = null;
+  }
+
+  async update_edit_object(editObject: EditObject): Promise<boolean> {
+    const updated = this.inner.update_edit_object(editObject.id, editObject);
+    if (updated) {
+      this.cachedDataUrl = null;
+    }
+    return updated;
+  }
+
+  remove_edit_object(id: string): boolean {
+    const removed = this.inner.remove_edit_object(id);
+    if (removed) {
+      this.cachedDataUrl = null;
+    }
+    return removed;
   }
 
   remove_annotation(index: number): boolean {

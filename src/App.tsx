@@ -37,11 +37,20 @@ function App() {
     viewMode,
     annotations,
     textInsertions,
+    editObjects,
+    selectedEditObjectId,
     selectedTool,
     textInput,
     fontSize,
     textColor,
     fontFamily,
+    bold,
+    italic,
+    strikeThrough,
+    strokeColor,
+    fillColor,
+    fillEnabled,
+    strokeWidth,
     currentPage,
     isAddingText,
     pendingEdit,
@@ -50,13 +59,25 @@ function App() {
     setFontSize,
     setTextColor,
     setFontFamily,
+    setBold,
+    setItalic,
+    setStrikeThrough,
+    setStrokeColor,
+    setFillColor,
+    setFillEnabled,
+    setStrokeWidth,
+    setSelectedEditObjectId,
     setCurrentPage,
     toggleEditMode,
     resetEditState,
     addTextAnnotation,
     addTextInsertion,
+    addEditObject,
+    updateEditObject,
+    updateSelectedEditObject,
     removeAnnotation,
     removeTextInsertion,
+    removeEditObject,
     clearAllEdits,
     cancelTextInput,
     handleOverlayClick,
@@ -149,7 +170,13 @@ function App() {
               <EditOverlay
                 viewMode={viewMode}
                 selectedTool={selectedTool}
+                currentPage={currentPage}
+                editObjects={editObjects}
+                selectedEditObjectId={selectedEditObjectId}
                 onOverlayClick={handleOverlayClick}
+                onCreateEditObject={addEditObject}
+                onSelectEditObject={setSelectedEditObjectId}
+                onUpdateEditObject={updateEditObject}
               />
               <TextInputPopup
                 isVisible={isAddingText}
@@ -172,10 +199,29 @@ function App() {
                 onTextColorChange={setTextColor}
                 fontFamily={fontFamily}
                 onFontFamilyChange={setFontFamily}
+                bold={bold}
+                onBoldChange={setBold}
+                italic={italic}
+                onItalicChange={setItalic}
+                strikeThrough={strikeThrough}
+                onStrikeThroughChange={setStrikeThrough}
+                strokeColor={strokeColor}
+                onStrokeColorChange={setStrokeColor}
+                fillColor={fillColor}
+                onFillColorChange={setFillColor}
+                fillEnabled={fillEnabled}
+                onFillEnabledChange={setFillEnabled}
+                strokeWidth={strokeWidth}
+                onStrokeWidthChange={setStrokeWidth}
                 annotations={annotations}
                 textInsertions={textInsertions}
+                editObjects={editObjects}
+                selectedEditObjectId={selectedEditObjectId}
+                onSelectEditObject={setSelectedEditObjectId}
+                onUpdateSelectedEditObject={updateSelectedEditObject}
                 onRemoveAnnotation={removeAnnotation}
                 onRemoveTextInsertion={removeTextInsertion}
+                onRemoveEditObject={removeEditObject}
                 onClearAllEdits={clearAllEdits}
                 onSave={handleSave}
                 isModified={isModified}
