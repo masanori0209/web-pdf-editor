@@ -18,7 +18,6 @@ import {
   editOverlay,
   acceptNextDialog,
   resetToUpload,
-  DOWNLOADS_DIR,
 } from '../helpers/pdf-editor';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

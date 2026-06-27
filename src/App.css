@@ -316,10 +316,43 @@
   position: absolute;
   inset: 0;
   z-index: 10;
+  user-select: none;
 }
 
 .pdf-overlay.clickable {
   cursor: crosshair;
+}
+
+.edit-object-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.edit-object-svg-item {
+  cursor: move;
+  pointer-events: auto;
+}
+
+.edit-object-svg-item:not(.is-selected) .edit-object-selection,
+.edit-object-svg-item:not(.is-selected) .edit-object-handle {
+  display: none;
+}
+
+.edit-object-selection {
+  fill: transparent;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+.edit-object-handle {
+  fill: #fff;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  cursor: nwse-resize;
+  pointer-events: auto;
 }
 
 .annotation-overlay,
@@ -335,6 +368,28 @@
   background: rgba(255, 235, 130, 0.9);
   border-radius: 3px;
   color: #222;
+}
+
+.edit-object-text {
+  z-index: 11;
+  cursor: move;
+  padding: 2px;
+}
+
+.edit-object-text.is-selected {
+  outline: 1.5px dashed var(--accent);
+  outline-offset: 2px;
+}
+
+.edit-object-text-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  right: -6px;
+  bottom: -6px;
+  background: #fff;
+  border: 1.5px solid var(--accent);
+  cursor: nwse-resize;
 }
 
 /* ── Text input popup ── */
@@ -409,6 +464,30 @@
   background: var(--surface-muted);
 }
 
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.tool-chip {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.45rem 0.35rem;
+}
+
+.tool-chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .segment-control .segment-btn {
   flex: 1;
   border: none;
@@ -473,6 +552,64 @@
   cursor: pointer;
 }
 
+.option-group input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.7rem;
+  margin-top: 0.55rem;
+}
+
+.toggle-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.selected-edit-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 0.8125rem;
+  margin-bottom: 0.65rem;
+}
+
+.position-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.position-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.position-grid input {
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8125rem;
+}
+
 .edit-category h4 {
   margin: 0 0 0.4rem;
   font-size: 0.8125rem;
@@ -499,6 +636,11 @@
   border-radius: var(--radius-sm);
   font-size: 0.8125rem;
   color: var(--text);
+}
+
+.edit-item.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .edit-item span {

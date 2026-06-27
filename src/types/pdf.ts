@@ -31,7 +31,46 @@ export interface TextInsertion {
 }
 
 export type ViewMode = 'view' | 'edit';
-export type EditTool = 'select' | 'annotation' | 'text';
+export type EditTool =
+  | 'select'
+  | 'annotation'
+  | 'text'
+  | 'rectangle'
+  | 'ellipse'
+  | 'line'
+  | 'arrow'
+  | 'callout'
+  | 'slash';
+
+export type EditObjectKind =
+  | 'text'
+  | 'rectangle'
+  | 'ellipse'
+  | 'line'
+  | 'arrow'
+  | 'callout'
+  | 'slash';
+
+export interface EditObject {
+  id: string;
+  page: number;
+  kind: EditObjectKind;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  text: string;
+  font_size: number;
+  color: string;
+  font_family: string;
+  bold: boolean;
+  italic: boolean;
+  strike_through: boolean;
+  stroke_color: string;
+  fill_color: string;
+  fill_enabled: boolean;
+  stroke_width: number;
+}
 
 export interface PendingEdit {
   x: number;

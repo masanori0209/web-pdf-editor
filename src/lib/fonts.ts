@@ -13,7 +13,7 @@ let japaneseFontBytes: Uint8Array | null = null;
 let japaneseFontLoadPromise: Promise<Uint8Array> | null = null;
 
 export function containsNonAscii(text: string): boolean {
-  return /[^\u0000-\u007f]/.test(text);
+  return Array.from(text).some((character) => character.charCodeAt(0) > 0x7f);
 }
 
 export function shouldUseJapaneseFont(fontFamily: string, text: string): boolean {

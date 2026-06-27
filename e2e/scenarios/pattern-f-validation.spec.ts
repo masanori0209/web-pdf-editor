@@ -6,7 +6,6 @@ import {
   SAMPLE_PDF,
   enterEditMode,
   acceptNextDialog,
-  resetToUpload,
 } from '../helpers/pdf-editor';
 
 test.describe('Pattern F: バリデーション・エラー', () => {
