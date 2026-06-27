@@ -51,6 +51,7 @@ function App() {
     fillColor,
     fillEnabled,
     strokeWidth,
+    opacity,
     currentPage,
     isAddingText,
     pendingEdit,
@@ -66,9 +67,11 @@ function App() {
     setFillColor,
     setFillEnabled,
     setStrokeWidth,
+    setOpacity,
     setSelectedEditObjectId,
     setCurrentPage,
     toggleEditMode,
+    enterEditMode,
     resetEditState,
     addTextAnnotation,
     addTextInsertion,
@@ -82,6 +85,12 @@ function App() {
     cancelTextInput,
     handleOverlayClick,
   } = useEditTools(pdfProcessor, updatePdfPreview, showToast);
+
+  useEffect(() => {
+    if (pdfProcessor) {
+      enterEditMode();
+    }
+  }, [pdfProcessor, enterEditMode]);
 
   const handleReset = () => {
     resetPdf();
@@ -213,6 +222,8 @@ function App() {
                 onFillEnabledChange={setFillEnabled}
                 strokeWidth={strokeWidth}
                 onStrokeWidthChange={setStrokeWidth}
+                opacity={opacity}
+                onOpacityChange={setOpacity}
                 annotations={annotations}
                 textInsertions={textInsertions}
                 editObjects={editObjects}

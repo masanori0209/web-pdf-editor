@@ -52,6 +52,7 @@ pub struct EditObject {
     pub fill_color: String,
     pub fill_enabled: bool,
     pub stroke_width: f32,
+    pub opacity: f32,
 }
 
 #[derive(Serialize)]
