@@ -61,11 +61,37 @@ test.describe('Pattern H: 高度な編集ツール', () => {
     await expect(page.getByText('図形 (1)')).toBeVisible();
 
     const selectedShape = page.locator('.edit-object-svg-item.is-selected');
-    const selectedShapeBody = selectedShape.locator('rect').first();
+    const selectedShapeBody = selectedShape.locator('.edit-object-hitbox').first();
     await expect(selectedShapeBody).toBeVisible();
+    await expect(selectedShape.locator('.edit-object-handle')).toHaveCount(8);
 
     const boxBefore = await selectedShapeBody.boundingBox();
     expect(boxBefore).not.toBeNull();
+    const initialX = Number(await page.locator('#selected-object-x').inputValue());
+    const initialY = Number(await page.locator('#selected-object-y').inputValue());
+    const initialWidth = Number(await page.locator('#selected-object-width').inputValue());
+    const initialHeight = Number(await page.locator('#selected-object-height').inputValue());
+
+    await page.mouse.move(boxBefore!.x + boxBefore!.width / 2, boxBefore!.y + boxBefore!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(boxBefore!.x + boxBefore!.width / 2 + 40, boxBefore!.y + boxBefore!.height / 2 + 24);
+    await page.mouse.up();
+    await expect.poll(async () => Number(await page.locator('#selected-object-x').inputValue())).toBeGreaterThan(initialX);
+    await expect.poll(async () => Number(await page.locator('#selected-object-y').inputValue())).toBeGreaterThan(initialY);
+
+    const movedX = Number(await page.locator('#selected-object-x').inputValue());
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#selected-object-x')).toHaveValue(String(movedX + 1));
+
+    const southeastHandle = selectedShape.locator('.edit-object-handle--se');
+    const handleBox = await southeastHandle.boundingBox();
+    expect(handleBox).not.toBeNull();
+    await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(handleBox!.x + handleBox!.width / 2 + 36, handleBox!.y + handleBox!.height / 2 + 28);
+    await page.mouse.up();
+    await expect.poll(async () => Number(await page.locator('#selected-object-width').inputValue())).toBeGreaterThan(initialWidth);
+    await expect.poll(async () => Number(await page.locator('#selected-object-height').inputValue())).toBeGreaterThan(initialHeight);
 
     await page.locator('#selected-object-x').fill('300');
     const boxAfterMove = await selectedShapeBody.boundingBox();

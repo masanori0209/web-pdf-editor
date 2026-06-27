@@ -267,16 +267,13 @@
   min-height: min(72vh, 820px);
   max-height: min(72vh, 820px);
   background: #e4e4e7;
-  touch-action: none;
-}
-
-.pdf-viewport--pannable {
-  cursor: grab;
+  touch-action: pan-x pan-y;
 }
 
 .pdf-viewport.is-panning {
   cursor: grabbing;
   user-select: none;
+  touch-action: none;
 }
 
 .pdf-stage {
@@ -334,8 +331,15 @@
   pointer-events: auto;
 }
 
+.edit-object-hitbox {
+  fill: transparent;
+  stroke: transparent;
+  pointer-events: all;
+}
+
 .edit-object-svg-item:not(.is-selected) .edit-object-selection,
-.edit-object-svg-item:not(.is-selected) .edit-object-handle {
+.edit-object-svg-item:not(.is-selected) .edit-object-handle,
+.edit-object-svg-item:not(.is-selected) .edit-object-line-handle {
   display: none;
 }
 
@@ -351,8 +355,39 @@
   fill: #fff;
   stroke: var(--accent);
   stroke-width: 1.5;
-  cursor: nwse-resize;
   pointer-events: auto;
+}
+
+.edit-object-handle--nw,
+.edit-object-handle--se {
+  cursor: nwse-resize;
+}
+
+.edit-object-handle--n,
+.edit-object-handle--s {
+  cursor: ns-resize;
+}
+
+.edit-object-handle--ne,
+.edit-object-handle--sw {
+  cursor: nesw-resize;
+}
+
+.edit-object-handle--e,
+.edit-object-handle--w {
+  cursor: ew-resize;
+}
+
+.edit-object-line-handle {
+  fill: #fff;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.edit-object-line-handle:active {
+  cursor: grabbing;
 }
 
 .shape-text-editor {
@@ -398,11 +433,69 @@
   position: absolute;
   width: 10px;
   height: 10px;
-  right: -6px;
-  bottom: -6px;
   background: #fff;
   border: 1.5px solid var(--accent);
+  pointer-events: auto;
+}
+
+.edit-object-text-handle--nw,
+.edit-object-text-handle--se {
   cursor: nwse-resize;
+}
+
+.edit-object-text-handle--n,
+.edit-object-text-handle--s {
+  cursor: ns-resize;
+}
+
+.edit-object-text-handle--ne,
+.edit-object-text-handle--sw {
+  cursor: nesw-resize;
+}
+
+.edit-object-text-handle--e,
+.edit-object-text-handle--w {
+  cursor: ew-resize;
+}
+
+.edit-object-text-handle--nw {
+  left: -6px;
+  top: -6px;
+}
+
+.edit-object-text-handle--n {
+  left: calc(50% - 5px);
+  top: -6px;
+}
+
+.edit-object-text-handle--ne {
+  right: -6px;
+  top: -6px;
+}
+
+.edit-object-text-handle--e {
+  right: -6px;
+  top: calc(50% - 5px);
+}
+
+.edit-object-text-handle--se {
+  right: -6px;
+  bottom: -6px;
+}
+
+.edit-object-text-handle--s {
+  left: calc(50% - 5px);
+  bottom: -6px;
+}
+
+.edit-object-text-handle--sw {
+  left: -6px;
+  bottom: -6px;
+}
+
+.edit-object-text-handle--w {
+  left: -6px;
+  top: calc(50% - 5px);
 }
 
 /* ── Text input popup ── */
