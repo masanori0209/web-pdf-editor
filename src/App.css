@@ -355,6 +355,19 @@
   pointer-events: auto;
 }
 
+.shape-text-editor {
+  position: absolute;
+  z-index: 18;
+  box-sizing: border-box;
+  padding: 0.2rem 0.35rem;
+  border: 1.5px solid var(--accent);
+  border-radius: 4px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
 .annotation-overlay,
 .text-insertion-overlay {
   position: absolute;
@@ -570,6 +583,25 @@
   gap: 0.3rem;
   color: var(--text-muted);
   font-size: 0.8125rem;
+}
+
+.range-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.range-row input[type='range'] {
+  width: 100%;
+  padding: 0;
+}
+
+.range-row span {
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .selected-edit-summary {

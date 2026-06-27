@@ -56,6 +56,7 @@ export const useEditTools = (
   const [fillColor, setFillColor] = useState('#eff6ff');
   const [fillEnabled, setFillEnabled] = useState(false);
   const [strokeWidth, setStrokeWidth] = useState(2);
+  const [opacity, setOpacity] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddingText, setIsAddingText] = useState(false);
   const [pendingEdit, setPendingEdit] = useState<PendingEdit | null>(null);
@@ -84,6 +85,10 @@ export const useEditTools = (
       }
       return 'edit';
     });
+  }, []);
+
+  const enterEditMode = useCallback(() => {
+    setViewMode('edit');
   }, []);
 
   const resetEditState = useCallback(() => {
@@ -175,6 +180,7 @@ export const useEditTools = (
         fill_color: fillColor,
         fill_enabled: false,
         stroke_width: strokeWidth,
+        opacity: 1,
       };
       await pdfProcessor.add_edit_object(editObject);
       setEditObjects(pdfProcessor.get_edit_objects());
@@ -238,6 +244,7 @@ export const useEditTools = (
       fill_color: fillColor,
       fill_enabled: kind === 'callout' ? true : fillEnabled,
       stroke_width: strokeWidth,
+      opacity,
     };
 
     try {
@@ -266,6 +273,7 @@ export const useEditTools = (
     fillColor,
     fillEnabled,
     strokeWidth,
+    opacity,
     refreshPreview,
     showToast,
   ]);
@@ -390,6 +398,7 @@ export const useEditTools = (
     fillColor,
     fillEnabled,
     strokeWidth,
+    opacity,
     currentPage,
     isAddingText,
     pendingEdit,
@@ -405,9 +414,11 @@ export const useEditTools = (
     setFillColor,
     setFillEnabled,
     setStrokeWidth,
+    setOpacity,
     setSelectedEditObjectId,
     setCurrentPage,
     toggleEditMode,
+    enterEditMode,
     resetEditState,
     addTextAnnotation,
     addTextInsertion,

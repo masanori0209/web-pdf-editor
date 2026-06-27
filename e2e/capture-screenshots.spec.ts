@@ -14,11 +14,8 @@ test('capture workflow screenshots for review', async ({ page }) => {
 
   await page.locator('input[type="file"]').setInputFiles(fixturePath);
   await expect(page.getByText('ページ数:')).toBeVisible({ timeout: 15000 });
-  await page.screenshot({ path: path.join(shotsDir, '02-view-mode.png'), fullPage: true });
-
-  await page.getByRole('button', { name: '編集モード' }).click();
   await expect(page.getByTestId('pdf-viewer-ready')).toBeVisible({ timeout: 15000 });
-  await page.screenshot({ path: path.join(shotsDir, '03-edit-mode.png'), fullPage: true });
+  await page.screenshot({ path: path.join(shotsDir, '02-edit-mode.png'), fullPage: true });
 
   await page.getByRole('button', { name: '注釈' }).click();
   const overlay = page.locator('.pdf-overlay.clickable');

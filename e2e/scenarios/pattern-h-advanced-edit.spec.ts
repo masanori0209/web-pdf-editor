@@ -7,6 +7,7 @@ import {
   selectTool,
   addTextInsertion,
   addShape,
+  pdfOverlay,
   savePdf,
   verifyPdfFile,
   DOWNLOADS_DIR,
@@ -30,6 +31,15 @@ test.describe('Pattern H: 高度な編集ツール', () => {
 
     await addShape(page, '四角', { x: 160, y: 230 }, { x: 280, y: 300 });
     await expect(page.getByText('図形 (1)')).toBeVisible();
+    await page.locator('#shape-opacity').fill('55');
+    await expect(page.locator('#shape-opacity')).toHaveValue('55');
+    await selectTool(page, '選択');
+    const overlayBox = await pdfOverlay(page).boundingBox();
+    expect(overlayBox).not.toBeNull();
+    await page.mouse.dblclick(overlayBox!.x + 220, overlayBox!.y + 265);
+    await page.getByLabel('図形内テキスト').fill('四角メモ');
+    await page.getByLabel('図形内テキスト').press('Enter');
+    await expect(page.locator('.edit-object-svg text').filter({ hasText: '四角メモ' })).toBeVisible();
 
     await page.getByLabel('背景色を使う').check();
     await addShape(page, '丸', { x: 320, y: 230 }, { x: 430, y: 300 });
@@ -43,7 +53,7 @@ test.describe('Pattern H: 高度な編集ツール', () => {
     await expect(page.locator('.text-insertion-overlay')).toContainText('Styled PDF Text');
 
     const savedPath = await savePdf(page, DOWNLOADS_DIR);
-    await verifyPdfFile(savedPath, ['Styled PDF Text', '吹き出しメモ']);
+    await verifyPdfFile(savedPath, ['Styled PDF Text', '四角メモ', '吹き出しメモ']);
   });
 
   test('H-2: 選択した図形を移動・リサイズ・削除できる', async ({ page }) => {

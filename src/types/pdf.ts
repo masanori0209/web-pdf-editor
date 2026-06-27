@@ -70,6 +70,7 @@ export interface EditObject {
   fill_color: string;
   fill_enabled: boolean;
   stroke_width: number;
+  opacity: number;
 }
 
 export interface PendingEdit {

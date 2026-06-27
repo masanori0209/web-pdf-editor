@@ -22,12 +22,14 @@ test.describe('Pattern A: アップロード・表示', () => {
     await uploadPdf(page, SAMPLE_PDF);
     await expect(page.getByText('sample.pdf')).toBeVisible();
     await expect(page.getByText('ページ数:')).toBeVisible();
-    await expect(page.getByRole('button', { name: '編集モード' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '表示モード' })).toBeVisible();
+    await expect(page.getByLabel('編集ツール')).toBeVisible();
     await expect(page.getByTestId('pdf-viewer-ready')).toBeVisible({ timeout: 15000 });
   });
 
-  test('A-3: 表示モードでは編集ツールバーが非表示', async ({ page }) => {
+  test('A-3: 表示モードへ切り替えると編集ツールバーが非表示', async ({ page }) => {
     await uploadPdf(page, SAMPLE_PDF);
+    await enterViewMode(page);
     await expect(page.getByLabel('編集ツール')).not.toBeVisible();
   });
 

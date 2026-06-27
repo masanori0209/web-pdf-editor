@@ -25,6 +25,8 @@ interface EditToolbarProps {
   onFillEnabledChange: (enabled: boolean) => void;
   strokeWidth: number;
   onStrokeWidthChange: (width: number) => void;
+  opacity: number;
+  onOpacityChange: (opacity: number) => void;
   annotations: TextAnnotation[];
   textInsertions: TextInsertion[];
   editObjects: EditObject[];
@@ -61,6 +63,9 @@ const SHAPE_LABELS: Record<EditObject['kind'], string> = {
   slash: '斜線',
 };
 
+const canEditShapeText = (kind: EditObject['kind']) =>
+  kind === 'rectangle' || kind === 'ellipse' || kind === 'callout';
+
 export const EditToolbar: React.FC<EditToolbarProps> = ({
   selectedTool,
   onToolSelect,
@@ -84,6 +89,8 @@ export const EditToolbar: React.FC<EditToolbarProps> = ({
   onFillEnabledChange,
   strokeWidth,
   onStrokeWidthChange,
+  opacity,
+  onOpacityChange,
   annotations,
   textInsertions,
   editObjects,
@@ -111,11 +118,15 @@ export const EditToolbar: React.FC<EditToolbarProps> = ({
   const activeFillColor = selectedObject ? selectedObject.fill_color : fillColor;
   const activeFillEnabled = selectedObject ? selectedObject.fill_enabled : fillEnabled;
   const activeStrokeWidth = selectedObject ? selectedObject.stroke_width : strokeWidth;
+  const activeOpacity = selectedObject ? selectedObject.opacity : opacity;
+  const selectedObjectSupportsText = selectedObject
+    ? selectedObject.kind === 'text' || canEditShapeText(selectedObject.kind)
+    : false;
   const showTextOptions =
     selectedTool === 'annotation'
     || selectedTool === 'text'
     || selectedTool === 'callout'
-    || (selectedObject && (selectedObject.kind === 'text' || selectedObject.kind === 'callout'));
+    || selectedObjectSupportsText;
   const showShapeOptions =
     ['rectangle', 'ellipse', 'line', 'arrow', 'callout', 'slash'].includes(selectedTool)
     || (selectedObject && selectedObject.kind !== 'text');
@@ -168,6 +179,12 @@ export const EditToolbar: React.FC<EditToolbarProps> = ({
   const updateStrokeWidth = (width: number) => {
     if (selectedObject) onUpdateSelectedEditObject({ stroke_width: width });
     else onStrokeWidthChange(width);
+  };
+
+  const updateOpacity = (nextOpacity: number) => {
+    const normalizedOpacity = Math.min(1, Math.max(0, nextOpacity));
+    if (selectedObject) onUpdateSelectedEditObject({ opacity: normalizedOpacity });
+    else onOpacityChange(normalizedOpacity);
   };
 
   return (
@@ -232,7 +249,7 @@ export const EditToolbar: React.FC<EditToolbarProps> = ({
               削除
             </button>
           </div>
-          {selectedObject.kind === 'text' || selectedObject.kind === 'callout' ? (
+          {selectedObjectSupportsText ? (
             <div className="option-group">
               <label htmlFor="selected-object-text">
                 テキスト
@@ -374,6 +391,22 @@ export const EditToolbar: React.FC<EditToolbarProps> = ({
                 value={activeStrokeWidth}
                 onChange={(e) => updateStrokeWidth(Number(e.target.value))}
               />
+            </label>
+          </div>
+          <div className="option-group">
+            <label htmlFor="shape-opacity">
+              透過率
+              <div className="range-row">
+                <input
+                  id="shape-opacity"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={Math.round(activeOpacity * 100)}
+                  onChange={(e) => updateOpacity(Number(e.target.value) / 100)}
+                />
+                <span>{Math.round(activeOpacity * 100)}%</span>
+              </div>
             </label>
           </div>
           <div className="toggle-row">

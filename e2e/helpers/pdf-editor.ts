@@ -23,7 +23,10 @@ export async function uploadPdf(page: Page, filePath: string): Promise<void> {
 }
 
 export async function enterEditMode(page: Page): Promise<void> {
-  await page.getByRole('button', { name: '編集モード' }).click();
+  const editModeButton = page.getByRole('button', { name: '編集モード' });
+  if (await editModeButton.isVisible()) {
+    await editModeButton.click();
+  }
   await expect(page.getByLabel('編集ツール')).toBeVisible();
   await expect(page.getByTestId('pdf-viewer-ready')).toBeVisible({ timeout: 15000 });
 }

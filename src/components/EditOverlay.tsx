@@ -38,6 +38,9 @@ type DragState =
       startY: number;
     };
 
+const canEditShapeText = (kind: EditObjectKind) =>
+  kind === 'rectangle' || kind === 'ellipse' || kind === 'callout';
+
 const shapeToolToKind = (tool: EditTool): EditObjectKind | null => {
   if (
     tool === 'rectangle'
@@ -139,6 +142,8 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
   const overlayRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<DragState | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
+  const [textEditingObjectId, setTextEditingObjectId] = useState<string | null>(null);
+  const [shapeTextInput, setShapeTextInput] = useState('');
   const shapeKind = shapeToolToKind(selectedTool);
   const canEdit = viewMode === 'edit';
 
@@ -154,9 +159,16 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
     setDragState(nextState);
   };
 
+  const getClientPagePoint = (clientX: number, clientY: number) => {
+    const rect = overlayRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    return screenToPagePoint(clientX, clientY, rect, metrics);
+  };
+
   const getPagePoint = (e: React.PointerEvent<HTMLDivElement | SVGElement | HTMLSpanElement>) => {
-    const rect = overlayRef.current?.getBoundingClientRect() ?? e.currentTarget.getBoundingClientRect();
-    return screenToPagePoint(e.clientX, e.clientY, rect, metrics);
+    const point = getClientPagePoint(e.clientX, e.clientY);
+    if (point) return point;
+    return screenToPagePoint(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), metrics);
   };
 
   const startBlankDrag = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -263,6 +275,39 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
     setActiveDragState({ mode: effectiveMode, object: editObject, startX: point.x, startY: point.y });
   };
 
+  const openShapeTextEditor = (editObject: EditObject) => {
+    onSelectEditObject(editObject.id);
+    setShapeTextInput(editObject.text);
+    setTextEditingObjectId(editObject.id);
+  };
+
+  const startShapeTextEdit = (e: React.MouseEvent<SVGElement>, editObject: EditObject) => {
+    if (!canEdit || selectedTool !== 'select' || !canEditShapeText(editObject.kind)) return;
+    e.stopPropagation();
+    openShapeTextEditor(editObject);
+  };
+
+  const handleOverlayDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!canEdit || selectedTool !== 'select') return;
+    const point = getClientPagePoint(e.clientX, e.clientY);
+    if (!point) return;
+    const hitObject = [...objectsForPage]
+      .reverse()
+      .find((editObject) => canEditShapeText(editObject.kind) && pointHitsObject(point.x, point.y, editObject));
+    if (hitObject) {
+      openShapeTextEditor(hitObject);
+    }
+  };
+
+  const finishShapeTextEdit = (commit: boolean) => {
+    const editObject = objectsForPage.find((item) => item.id === textEditingObjectId);
+    if (commit && editObject) {
+      onUpdateEditObject({ ...editObject, text: shapeTextInput });
+    }
+    setTextEditingObjectId(null);
+    setShapeTextInput('');
+  };
+
   const renderDraft = () => {
     if (!dragState || dragState.mode !== 'create') return null;
     const draft: EditObject = {
@@ -284,6 +329,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
       fill_color: '#eff6ff',
       fill_enabled: false,
       stroke_width: 2,
+      opacity: 1,
     };
     return renderSvgObject(draft, true);
   };
@@ -293,7 +339,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
     const selected = editObject.id === selectedEditObjectId && canEdit && !draft;
     const strokeWidth = Math.max(1, editObject.stroke_width * metrics.scale);
     const fill = editObject.fill_enabled ? editObject.fill_color : 'transparent';
-    const opacity = editObject.fill_enabled ? 0.35 : 1;
+    const objectOpacity = Math.min(1, Math.max(0, editObject.opacity));
 
     if (editObject.kind === 'text') return null;
 
@@ -303,6 +349,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
         className={`edit-object-svg-item ${selected ? 'is-selected' : ''}`}
         pointerEvents="all"
         onPointerDown={(e) => startObjectDrag(e, editObject, 'move')}
+        onDoubleClick={(e) => startShapeTextEdit(e, editObject)}
       >
         {editObject.kind === 'rectangle' && (
           <rect
@@ -311,8 +358,9 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
             width={box.width}
             height={box.height}
             fill={fill}
-            fillOpacity={opacity}
+            fillOpacity={editObject.fill_enabled ? objectOpacity : 0}
             stroke={editObject.stroke_color}
+            strokeOpacity={objectOpacity}
             strokeWidth={strokeWidth}
           />
         )}
@@ -323,8 +371,9 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
             rx={box.width / 2}
             ry={box.height / 2}
             fill={fill}
-            fillOpacity={opacity}
+            fillOpacity={editObject.fill_enabled ? objectOpacity : 0}
             stroke={editObject.stroke_color}
+            strokeOpacity={objectOpacity}
             strokeWidth={strokeWidth}
           />
         )}
@@ -336,6 +385,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
               x2={box.x2}
               y2={box.y2}
               stroke={editObject.stroke_color}
+              strokeOpacity={objectOpacity}
               strokeWidth={strokeWidth}
               strokeLinecap="round"
             />
@@ -343,6 +393,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
               <polygon
                 points={arrowHeadPoints(box.x1, box.y1, box.x2, box.y2, 10 + strokeWidth * 2)}
                 fill={editObject.stroke_color}
+                fillOpacity={objectOpacity}
               />
             )}
           </>
@@ -354,6 +405,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
             x2={box.left + box.width}
             y2={box.top}
             stroke={editObject.stroke_color}
+            strokeOpacity={objectOpacity}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
           />
@@ -363,23 +415,29 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
             <polygon
               points={calloutPoints(box)}
               fill={fill}
-              fillOpacity={opacity}
+              fillOpacity={editObject.fill_enabled ? objectOpacity : 0}
               stroke={editObject.stroke_color}
+              strokeOpacity={objectOpacity}
               strokeWidth={strokeWidth}
             />
-            <text
-              x={8 * metrics.scale}
-              y={(8 + editObject.font_size) * metrics.scale}
-              fill={editObject.color}
-              fontFamily={getOverlayFontFamily(editObject.font_family)}
-              fontSize={editObject.font_size * metrics.scale}
-              fontWeight={editObject.bold ? 700 : 400}
-              fontStyle={editObject.italic ? 'italic' : 'normal'}
-              textDecoration={editObject.strike_through ? 'line-through' : 'none'}
-            >
-              {editObject.text}
-            </text>
           </g>
+        )}
+        {canEditShapeText(editObject.kind) && editObject.text && textEditingObjectId !== editObject.id && (
+          <text
+            x={box.left + box.width / 2}
+            y={box.top + box.height / 2}
+            fill={editObject.color}
+            fontFamily={getOverlayFontFamily(editObject.font_family)}
+            fontSize={editObject.font_size * metrics.scale}
+            fontWeight={editObject.bold ? 700 : 400}
+            fontStyle={editObject.italic ? 'italic' : 'normal'}
+            textDecoration={editObject.strike_through ? 'line-through' : 'none'}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            pointerEvents="none"
+          >
+            {editObject.text}
+          </text>
         )}
         {selected && (
           <>
@@ -405,6 +463,45 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
     );
   };
 
+  const renderShapeTextEditor = () => {
+    if (!textEditingObjectId) return null;
+    const editObject = objectsForPage.find((item) => item.id === textEditingObjectId);
+    if (!editObject || !canEditShapeText(editObject.kind)) return null;
+    const box = getScreenBox(editObject, metrics);
+
+    return (
+      <input
+        className="shape-text-editor"
+        autoFocus
+        value={shapeTextInput}
+        aria-label="図形内テキスト"
+        style={{
+          left: box.left + Math.max(6, box.width * 0.08),
+          top: box.top + Math.max(6, box.height / 2 - (editObject.font_size * metrics.scale) / 1.2),
+          width: Math.max(80, box.width * 0.84),
+          fontSize: editObject.font_size * metrics.scale,
+          color: editObject.color,
+          fontFamily: getOverlayFontFamily(editObject.font_family),
+          fontWeight: editObject.bold ? 700 : 400,
+          fontStyle: editObject.italic ? 'italic' : 'normal',
+        }}
+        onChange={(e) => setShapeTextInput(e.target.value)}
+        onBlur={() => finishShapeTextEdit(true)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            finishShapeTextEdit(true);
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            finishShapeTextEdit(false);
+          }
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
+      />
+    );
+  };
+
   const renderTextObject = (editObject: EditObject) => {
     if (editObject.kind !== 'text') return null;
     const box = getScreenBox(editObject, metrics);
@@ -425,6 +522,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
           fontWeight: editObject.bold ? 700 : 400,
           fontStyle: editObject.italic ? 'italic' : 'normal',
           textDecoration: editObject.strike_through ? 'line-through' : 'none',
+          opacity: Math.min(1, Math.max(0, editObject.opacity)),
           pointerEvents: canEdit && selectedTool === 'select' ? 'auto' : 'none',
         }}
         onPointerDown={(e) => startObjectDrag(e, editObject, 'move')}
@@ -448,6 +546,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
       onPointerDown={startBlankDrag}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onDoubleClick={handleOverlayDoubleClick}
       role="presentation"
       style={{
         cursor: canEdit && selectedTool !== 'select' ? 'crosshair' : 'default',
@@ -458,6 +557,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
         {objectsForPage.map((editObject) => renderSvgObject(editObject))}
         {renderDraft()}
       </svg>
+      {renderShapeTextEditor()}
       {objectsForPage.map((editObject) => renderTextObject(editObject))}
     </div>
   );

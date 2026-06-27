@@ -160,12 +160,13 @@ fn apply_filled_and_stroked_rect(
     stroke_color: [f32; 3],
     fill_enabled: bool,
     stroke_width: f32,
+    opacity: f32,
 ) -> Result<(), JsValue> {
     if fill_enabled {
-        page.add_rect(rect, fill_color, 0.35).map_err(|e| js_err(e))?;
+        page.add_rect(rect, fill_color, opacity).map_err(|e| js_err(e))?;
     }
     if stroke_width > 0.0 {
-        page.add_rect_stroke(rect, stroke_color, stroke_width, 1.0)
+        page.add_rect_stroke(rect, stroke_color, stroke_width, opacity)
             .map_err(|e| js_err(e))?;
     }
     Ok(())
@@ -178,13 +179,14 @@ fn apply_filled_and_stroked_ellipse(
     stroke_color: [f32; 3],
     fill_enabled: bool,
     stroke_width: f32,
+    opacity: f32,
 ) -> Result<(), JsValue> {
     if fill_enabled {
-        page.add_ellipse(rect, fill_color, 0.35, true, 0.0)
+        page.add_ellipse(rect, fill_color, opacity, true, 0.0)
             .map_err(|e| js_err(e))?;
     }
     if stroke_width > 0.0 {
-        page.add_ellipse(rect, stroke_color, 1.0, false, stroke_width)
+        page.add_ellipse(rect, stroke_color, opacity, false, stroke_width)
             .map_err(|e| js_err(e))?;
     }
     Ok(())
@@ -235,6 +237,51 @@ fn apply_strike_through(
         .map_err(|e| js_err(e))
 }
 
+fn apply_shape_text(
+    page: &mut harumi::PageHandle<'_>,
+    font: FontHandle,
+    rect: [f32; 4],
+    edit_object: &EditObject,
+    color: [f32; 3],
+) -> Result<(), JsValue> {
+    if edit_object.text.trim().is_empty() {
+        return Ok(());
+    }
+
+    let text_width = estimate_text_width(
+        &edit_object.text,
+        edit_object.font_size,
+        &edit_object.font_family,
+    );
+    let text_x = rect[0] + (rect[2] - text_width) / 2.0;
+    let text_y = rect[1] + (rect[3] - edit_object.font_size) / 2.0;
+
+    page.add_text_styled(
+        &edit_object.text,
+        font,
+        [text_x, text_y],
+        edit_object.font_size,
+        color,
+        edit_object.bold,
+        edit_object.italic,
+    )
+    .map_err(|e| js_err(e))?;
+
+    if edit_object.strike_through {
+        apply_strike_through(
+            page,
+            &edit_object.text,
+            text_x,
+            text_y,
+            edit_object.font_size,
+            &edit_object.font_family,
+            color,
+        )?;
+    }
+
+    Ok(())
+}
+
 fn apply_edit_object(
     document: &mut Document,
     font: FontHandle,
@@ -248,6 +295,7 @@ fn apply_edit_object(
     let fill_color = parse_hex_color(&edit_object.fill_color)?;
     let text_color = parse_hex_color(&edit_object.color)?;
     let stroke_width = edit_object.stroke_width.max(0.0);
+    let opacity = edit_object.opacity.clamp(0.0, 1.0);
 
     match edit_object.kind.as_str() {
         "rectangle" => {
@@ -259,7 +307,9 @@ fn apply_edit_object(
                 stroke_color,
                 edit_object.fill_enabled,
                 stroke_width,
+                opacity,
             )?;
+            apply_shape_text(&mut page, font, rect, edit_object, text_color)?;
         }
         "ellipse" => {
             let rect = shape_rect(page_height, edit_object);
@@ -270,11 +320,13 @@ fn apply_edit_object(
                 stroke_color,
                 edit_object.fill_enabled,
                 stroke_width,
+                opacity,
             )?;
+            apply_shape_text(&mut page, font, rect, edit_object, text_color)?;
         }
         "line" => {
             let (from, to) = line_points(page_height, edit_object);
-            page.add_line(from, to, stroke_color, stroke_width.max(1.0), 1.0)
+            page.add_line(from, to, stroke_color, stroke_width.max(1.0), opacity)
                 .map_err(|e| js_err(e))?;
         }
         "slash" => {
@@ -284,54 +336,30 @@ fn apply_edit_object(
                 [rect[0] + rect[2], rect[1] + rect[3]],
                 stroke_color,
                 stroke_width.max(1.0),
-                1.0,
+                opacity,
             )
             .map_err(|e| js_err(e))?;
         }
         "arrow" => {
             let (from, to) = line_points(page_height, edit_object);
-            page.add_line(from, to, stroke_color, stroke_width.max(1.0), 1.0)
+            page.add_line(from, to, stroke_color, stroke_width.max(1.0), opacity)
                 .map_err(|e| js_err(e))?;
             let head = arrow_head(from, to, 10.0 + stroke_width * 2.0);
-            page.add_polygon(&head, stroke_color, 1.0, true, 0.0)
+            page.add_polygon(&head, stroke_color, opacity, true, 0.0)
                 .map_err(|e| js_err(e))?;
         }
         "callout" => {
             let rect = shape_rect(page_height, edit_object);
             let points = callout_points(rect);
             if edit_object.fill_enabled {
-                page.add_polygon(&points, fill_color, 0.35, true, 0.0)
+                page.add_polygon(&points, fill_color, opacity, true, 0.0)
                     .map_err(|e| js_err(e))?;
             }
             if stroke_width > 0.0 {
-                page.add_path(&points, true, stroke_color, false, stroke_width, 1.0)
+                page.add_path(&points, true, stroke_color, false, stroke_width, opacity)
                     .map_err(|e| js_err(e))?;
             }
-            if !edit_object.text.trim().is_empty() {
-                let text_x = rect[0] + 8.0;
-                let text_y = rect[1] + rect[3] - edit_object.font_size - 8.0;
-                page.add_text_styled(
-                    &edit_object.text,
-                    font,
-                    [text_x, text_y],
-                    edit_object.font_size,
-                    text_color,
-                    edit_object.bold,
-                    edit_object.italic,
-                )
-                .map_err(|e| js_err(e))?;
-                if edit_object.strike_through {
-                    apply_strike_through(
-                        &mut page,
-                        &edit_object.text,
-                        text_x,
-                        text_y,
-                        edit_object.font_size,
-                        &edit_object.font_family,
-                        text_color,
-                    )?;
-                }
-            }
+            apply_shape_text(&mut page, font, rect, edit_object, text_color)?;
         }
         "text" => {
             let pdf_y = screen_to_pdf_y(page_height, edit_object.y, edit_object.font_size);
