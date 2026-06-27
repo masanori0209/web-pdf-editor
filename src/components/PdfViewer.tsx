@@ -22,8 +22,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   pdfInfo,
   pdfDataUrl,
   currentPage,
-  viewMode,
-  selectedTool,
   textInsertions,
   annotations,
   onPageChange,
@@ -31,7 +29,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 }) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
-  const panEnabled = viewMode === 'view' || selectedTool === 'select';
 
   const { canvasRef, metrics, renderError, rendering } = usePdfRenderer({
     pdfDataUrl,
@@ -44,7 +41,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     viewportRef,
     zoom,
     setZoom,
-    panEnabled,
+    panEnabled: false,
     resetKey: String(currentPage),
   });
 
@@ -125,12 +122,12 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         </div>
 
         <p className="pdf-toolbar__hint">
-          ドラッグで移動 · Space+ドラッグ · Ctrl+ホイール / ピンチでズーム
+          スクロールで移動 · Space/中ボタン+ドラッグ · Ctrl+ホイール / ピンチでズーム
         </p>
       </div>
 
       <div
-        className={`pdf-viewport ${panEnabled ? 'pdf-viewport--pannable' : ''}`}
+        className="pdf-viewport"
         ref={viewportRef}
         data-testid={metrics ? 'pdf-viewer-ready' : 'pdf-viewer-loading'}
         aria-label="PDFプレビュー"

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { EditObject, EditObjectKind, ViewMode, EditTool } from '../types/pdf';
 import { pageToScreenPoint, screenToPagePoint } from '../lib/coordinates';
 import { getOverlayFontFamily } from '../lib/fonts';
@@ -22,6 +22,12 @@ interface EditOverlayProps {
   onUpdateEditObject: (editObject: EditObject) => void;
 }
 
+type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
+type LineHandle = 'line-start' | 'line-end';
+type ObjectDragMode =
+  | { mode: 'move' }
+  | { mode: 'resize'; handle: ResizeHandle | LineHandle };
+
 type DragState =
   | {
       mode: 'create';
@@ -32,14 +38,30 @@ type DragState =
       currentY: number;
     }
   | {
-      mode: 'move' | 'resize';
+      mode: 'move';
       object: EditObject;
       startX: number;
       startY: number;
+      startClientX: number;
+      startClientY: number;
+    }
+  | {
+      mode: 'resize';
+      handle: ResizeHandle | LineHandle;
+      object: EditObject;
+      startX: number;
+      startY: number;
+      startClientX: number;
+      startClientY: number;
     };
 
 const canEditShapeText = (kind: EditObjectKind) =>
   kind === 'rectangle' || kind === 'ellipse' || kind === 'callout';
+
+const hasLineEndpoints = (kind: EditObjectKind) => kind === 'line' || kind === 'arrow';
+
+const RECT_RESIZE_HANDLES: ResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+const MIN_OBJECT_SIZE = 12;
 
 const shapeToolToKind = (tool: EditTool): EditObjectKind | null => {
   if (
@@ -113,7 +135,7 @@ const getPageBox = (editObject: EditObject) => {
 
 const pointHitsObject = (x: number, y: number, editObject: EditObject) => {
   const box = getPageBox(editObject);
-  const padding = Math.max(6, editObject.stroke_width + 4);
+  const padding = Math.max(8, editObject.stroke_width + 6);
   return (
     x >= box.left - padding
     && x <= box.left + box.width + padding
@@ -122,9 +144,69 @@ const pointHitsObject = (x: number, y: number, editObject: EditObject) => {
   );
 };
 
-const pointHitsResizeCorner = (x: number, y: number, editObject: EditObject) => {
-  const box = getPageBox(editObject);
-  return x >= box.left + box.width - 18 && y >= box.top + box.height - 18;
+const isFormControl = (target: EventTarget | null) =>
+  target instanceof HTMLInputElement
+  || target instanceof HTMLTextAreaElement
+  || target instanceof HTMLSelectElement
+  || target instanceof HTMLButtonElement;
+
+const getHandlePosition = (
+  handle: ResizeHandle,
+  box: { left: number; top: number; width: number; height: number },
+) => {
+  const cx = box.left + box.width / 2;
+  const cy = box.top + box.height / 2;
+  const right = box.left + box.width;
+  const bottom = box.top + box.height;
+  const positions: Record<ResizeHandle, { x: number; y: number }> = {
+    nw: { x: box.left, y: box.top },
+    n: { x: cx, y: box.top },
+    ne: { x: right, y: box.top },
+    e: { x: right, y: cy },
+    se: { x: right, y: bottom },
+    s: { x: cx, y: bottom },
+    sw: { x: box.left, y: bottom },
+    w: { x: box.left, y: cy },
+  };
+  return positions[handle];
+};
+
+const resizeBoxObject = (editObject: EditObject, handle: ResizeHandle, dx: number, dy: number) => {
+  let left = Math.min(editObject.x, editObject.x + editObject.width);
+  let right = Math.max(editObject.x, editObject.x + editObject.width);
+  let top = Math.min(editObject.y, editObject.y + editObject.height);
+  let bottom = Math.max(editObject.y, editObject.y + editObject.height);
+
+  if (handle.includes('w')) left = Math.min(right - MIN_OBJECT_SIZE, left + dx);
+  if (handle.includes('e')) right = Math.max(left + MIN_OBJECT_SIZE, right + dx);
+  if (handle.includes('n')) top = Math.min(bottom - MIN_OBJECT_SIZE, top + dy);
+  if (handle.includes('s')) bottom = Math.max(top + MIN_OBJECT_SIZE, bottom + dy);
+
+  return {
+    ...editObject,
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+};
+
+const resizeLineObject = (editObject: EditObject, handle: LineHandle, dx: number, dy: number) => {
+  if (handle === 'line-start') {
+    return {
+      ...editObject,
+      x: editObject.x + dx,
+      y: editObject.y + dy,
+      width: editObject.width - dx,
+      height: editObject.height - dy,
+    };
+  }
+
+  return {
+    ...editObject,
+    width: editObject.width + dx,
+    height: editObject.height + dy,
+  };
 };
 
 export const EditOverlay: React.FC<EditOverlayProps> = ({
@@ -151,6 +233,31 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
     () => editObjects.filter((item) => item.page === currentPage),
     [editObjects, currentPage],
   );
+
+  useEffect(() => {
+    if (!canEdit || selectedTool !== 'select' || !selectedEditObjectId) return undefined;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isFormControl(event.target)) return;
+      if (!['ArrowUp', 'ArrowRight', 'ArrowDown', 'ArrowLeft'].includes(event.key)) return;
+
+      const editObject = editObjects.find((item) => item.id === selectedEditObjectId);
+      if (!editObject) return;
+
+      const step = event.shiftKey ? 10 : 1;
+      let delta = { x: 0, y: 0 };
+      if (event.key === 'ArrowUp') delta = { x: 0, y: -step };
+      if (event.key === 'ArrowRight') delta = { x: step, y: 0 };
+      if (event.key === 'ArrowDown') delta = { x: 0, y: step };
+      if (event.key === 'ArrowLeft') delta = { x: -step, y: 0 };
+
+      event.preventDefault();
+      onUpdateEditObject({ ...editObject, x: editObject.x + delta.x, y: editObject.y + delta.y });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canEdit, editObjects, onUpdateEditObject, selectedEditObjectId, selectedTool]);
 
   if (!metrics) return null;
 
@@ -186,10 +293,12 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
         onSelectEditObject(hitObject.id);
         e.currentTarget.setPointerCapture(e.pointerId);
         setActiveDragState({
-          mode: pointHitsResizeCorner(point.x, point.y, hitObject) ? 'resize' : 'move',
+          mode: 'move',
           object: hitObject,
           startX: point.x,
           startY: point.y,
+          startClientX: e.clientX,
+          startClientY: e.clientY,
         });
       } else {
         onSelectEditObject(null);
@@ -213,7 +322,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
     onOverlayClick(point.x, point.y);
   };
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement | SVGElement>) => {
     const activeDragState = dragStateRef.current;
     if (!activeDragState) return;
     const point = getPagePoint(e);
@@ -223,21 +332,19 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
       return;
     }
 
-    const dx = point.x - activeDragState.startX;
-    const dy = point.y - activeDragState.startY;
+    const dx = (e.clientX - activeDragState.startClientX) / metrics.scale;
+    const dy = (e.clientY - activeDragState.startClientY) / metrics.scale;
     const nextObject =
       activeDragState.mode === 'move'
         ? { ...activeDragState.object, x: activeDragState.object.x + dx, y: activeDragState.object.y + dy }
-        : {
-            ...activeDragState.object,
-            width: Math.max(12, activeDragState.object.width + dx),
-            height: Math.max(12, activeDragState.object.height + dy),
-          };
+        : activeDragState.handle === 'line-start' || activeDragState.handle === 'line-end'
+          ? resizeLineObject(activeDragState.object, activeDragState.handle, dx, dy)
+          : resizeBoxObject(activeDragState.object, activeDragState.handle, dx, dy);
 
     onUpdateEditObject(nextObject);
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement | SVGElement>) => {
     const activeDragState = dragStateRef.current;
     if (!activeDragState) return;
 
@@ -260,19 +367,25 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
   const startObjectDrag = (
     e: React.PointerEvent<SVGElement | HTMLDivElement | HTMLSpanElement>,
     editObject: EditObject,
-    mode: 'move' | 'resize',
+    dragMode: ObjectDragMode = { mode: 'move' },
   ) => {
     if (!canEdit || selectedTool !== 'select') return;
     e.stopPropagation();
     const point = getPagePoint(e);
-    const box = getScreenBox(editObject, metrics);
-    const isNearResizeCorner =
-      e.clientX >= box.left + box.width - 18
-      && e.clientY >= box.top + box.height - 18;
-    const effectiveMode = mode === 'move' && isNearResizeCorner ? 'resize' : mode;
     onSelectEditObject(editObject.id);
-    overlayRef.current?.setPointerCapture(e.pointerId);
-    setActiveDragState({ mode: effectiveMode, object: editObject, startX: point.x, startY: point.y });
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore when the browser has already released the pointer.
+    }
+    setActiveDragState({
+      ...dragMode,
+      object: editObject,
+      startX: point.x,
+      startY: point.y,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+    });
   };
 
   const openShapeTextEditor = (editObject: EditObject) => {
@@ -307,6 +420,76 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
     setTextEditingObjectId(null);
     setShapeTextInput('');
   };
+
+  const renderSvgMoveHitbox = (box: ReturnType<typeof getScreenBox>) => {
+    const minHitSize = 24;
+    const hitWidth = Math.max(box.width, minHitSize);
+    const hitHeight = Math.max(box.height, minHitSize);
+    return (
+      <rect
+        className="edit-object-hitbox"
+        x={box.left - (hitWidth - box.width) / 2}
+        y={box.top - (hitHeight - box.height) / 2}
+        width={hitWidth}
+        height={hitHeight}
+      />
+    );
+  };
+
+  const renderSvgResizeHandles = (editObject: EditObject, box: ReturnType<typeof getScreenBox>) => {
+    if (hasLineEndpoints(editObject.kind)) {
+      return (
+        <>
+          <circle
+            className="edit-object-line-handle"
+            cx={box.x1}
+            cy={box.y1}
+            r={6}
+            onPointerDown={(e) =>
+              startObjectDrag(e, editObject, { mode: 'resize', handle: 'line-start' })
+            }
+          />
+          <circle
+            className="edit-object-line-handle"
+            cx={box.x2}
+            cy={box.y2}
+            r={6}
+            onPointerDown={(e) =>
+              startObjectDrag(e, editObject, { mode: 'resize', handle: 'line-end' })
+            }
+          />
+        </>
+      );
+    }
+
+    return RECT_RESIZE_HANDLES.map((handle) => {
+      const position = getHandlePosition(handle, box);
+      return (
+        <rect
+          key={handle}
+          className={`edit-object-handle edit-object-handle--${handle}`}
+          x={position.x - 5}
+          y={position.y - 5}
+          width={10}
+          height={10}
+          onPointerDown={(e) =>
+            startObjectDrag(e, editObject, { mode: 'resize', handle })
+          }
+        />
+      );
+    });
+  };
+
+  const renderTextResizeHandles = (editObject: EditObject) =>
+    RECT_RESIZE_HANDLES.map((handle) => (
+      <span
+        key={handle}
+        className={`edit-object-text-handle edit-object-text-handle--${handle}`}
+        onPointerDown={(e) =>
+          startObjectDrag(e, editObject, { mode: 'resize', handle })
+        }
+      />
+    ));
 
   const renderDraft = () => {
     if (!dragState || dragState.mode !== 'create') return null;
@@ -348,9 +531,10 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
         key={editObject.id}
         className={`edit-object-svg-item ${selected ? 'is-selected' : ''}`}
         pointerEvents="all"
-        onPointerDown={(e) => startObjectDrag(e, editObject, 'move')}
+        onPointerDown={(e) => startObjectDrag(e, editObject)}
         onDoubleClick={(e) => startShapeTextEdit(e, editObject)}
       >
+        {!draft && renderSvgMoveHitbox(box)}
         {editObject.kind === 'rectangle' && (
           <rect
             x={box.left}
@@ -448,15 +632,7 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
               width={box.width}
               height={box.height}
             />
-            <rect
-              className="edit-object-handle"
-              x={box.left + box.width - 5}
-              y={box.top + box.height - 5}
-              width={10}
-              height={10}
-              onPointerDownCapture={(e) => startObjectDrag(e, editObject, 'resize')}
-              onPointerDown={(e) => e.stopPropagation()}
-            />
+            {renderSvgResizeHandles(editObject, box)}
           </>
         )}
       </g>
@@ -514,6 +690,8 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
         style={{
           left: box.left,
           top: box.top,
+          width: box.width,
+          height: box.height,
           minWidth: box.width,
           minHeight: box.height,
           fontSize: editObject.font_size * metrics.scale,
@@ -525,16 +703,10 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
           opacity: Math.min(1, Math.max(0, editObject.opacity)),
           pointerEvents: canEdit && selectedTool === 'select' ? 'auto' : 'none',
         }}
-        onPointerDown={(e) => startObjectDrag(e, editObject, 'move')}
+        onPointerDown={(e) => startObjectDrag(e, editObject)}
       >
         {editObject.text}
-        {selected && (
-          <span
-            className="edit-object-text-handle"
-            onPointerDownCapture={(e) => startObjectDrag(e, editObject, 'resize')}
-            onPointerDown={(e) => e.stopPropagation()}
-          />
-        )}
+        {selected && renderTextResizeHandles(editObject)}
       </div>
     );
   };
@@ -553,7 +725,13 @@ export const EditOverlay: React.FC<EditOverlayProps> = ({
         pointerEvents: canEdit ? 'auto' : 'none',
       }}
     >
-      <svg className="edit-object-svg" width={metrics.renderedWidth} height={metrics.renderedHeight}>
+      <svg
+        className="edit-object-svg"
+        width={metrics.renderedWidth}
+        height={metrics.renderedHeight}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
         {objectsForPage.map((editObject) => renderSvgObject(editObject))}
         {renderDraft()}
       </svg>
